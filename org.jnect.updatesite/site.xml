@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/org.jnect.demo.feature_1.0.0.qualifier.jar" id="org.jnect.demo.feature" version="1.0.0.qualifier">
+   <feature url="features/org.jnect.demo.feature_0.1.0.jar" id="org.jnect.demo.feature" version="0.1.0">
       <category name="org.jnect.demo"/>
    </feature>
-   <feature url="features/org.jnect.api.feature_1.0.0.qualifier.jar" id="org.jnect.api.feature" version="1.0.0.qualifier">
+   <feature url="features/org.jnect.api.feature_0.1.0.jar" id="org.jnect.api.feature" version="0.1.0">
       <category name="org.jnect.api"/>
    </feature>
    <category-def name="org.jnect.demo" label="Jnect Demo">

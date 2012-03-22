@@ -2,7 +2,7 @@
 <feature
       id="org.jnect.api.feature"
       label="Kinect API Feature"
-      version="1.0.0.qualifier"
+      version="0.1.0"
       provider-name="jnect.org">
 
    <description url="http://www.example.com/description">

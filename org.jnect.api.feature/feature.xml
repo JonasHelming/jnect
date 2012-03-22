@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="org.jnect.api.feature"
+      label="Kinect API Feature"
+      version="1.0.0.qualifier"
+      provider-name="jnect.org">
+
+   <description url="http://www.example.com/description">
+      This feature contains all necessary plugins for building plugins interacting with kinect. This is basicly the api.
+   </description>
+
+   <copyright url="http://www.example.com/copyright">
+      [Enter Copyright Description here.]
+   </copyright>
+
+   <license url="http://www.example.com/license">
+      [Enter License Description here.]
+   </license>
+
+   <includes
+         id="org.eclipse.emf.ecore"
+         version="0.0.0"/>
+
+   <includes
+         id="org.eclipse.gef"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.jnect.bodymodel"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.jnect.gesture"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.jnect.core"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"/>
+
+</feature>

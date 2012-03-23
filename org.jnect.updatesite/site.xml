@@ -11,5 +11,5 @@
          Feature containing demos: debug, game and gef
       </description>
    </category-def>
-   <category-def name="org.jnect.api" label="Eclipse Kinect API"/>
+   <category-def name="org.jnect.api" label="Jnect API"/>
 </site>

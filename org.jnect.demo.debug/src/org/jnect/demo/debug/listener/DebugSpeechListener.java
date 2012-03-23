@@ -50,9 +50,9 @@ public class DebugSpeechListener extends SpeechListener {
 		words.add(STEP_INTO);
 		words.add(STEP_RETURN);
 		words.add(RESUME);
-//		words.add(JAVA_PERSPECTIVE);
+		words.add(JAVA_PERSPECTIVE);
 //		words.add(STOP_SPEECH_RECOGNITION);
-//		words.add(OPEN_TYPE);
+		words.add(OPEN_TYPE);
 	}
 	
 	@Override

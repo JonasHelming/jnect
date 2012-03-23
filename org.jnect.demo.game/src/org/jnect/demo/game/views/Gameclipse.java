@@ -43,7 +43,7 @@ import org.jnect.gesture.detectors.JumpGestureDetector;
  */
 public class Gameclipse extends ViewPart implements SelectionListener {
 
-	public static final String ID = "org.jnect.core.game.views.Gameclipse";
+	public static final String ID = "org.jnect.demo.game.views.Gameclipse";
 
 	// the list of game states. assumption is that the game state transition is
 	// linear (one after the other)

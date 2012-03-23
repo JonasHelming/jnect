@@ -25,7 +25,6 @@ public class ProxySpeechConnectionProcessor extends ConnectionProcessor {
 	@Override
 	public void run() {
 		logger.info("Starting speech recognition");
-		this.startSpeechRecognition();
 		this.run = true;
 		while (this.run) {
 			String input = this.kinectSpeechRecognitionProxy.getSpeech(); // This seems to be non-blocking

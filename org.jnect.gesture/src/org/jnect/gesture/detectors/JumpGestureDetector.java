@@ -40,17 +40,17 @@ public class JumpGestureDetector extends Gesture {
 			if ("y".equals(feature.getName())) {
 				float sensorValue = notification.getNewFloatValue();
 				
-				if (humanBodyPart.eClass().equals(Head.class)) {
+				if (Head.class.isInstance(humanBodyPart)) {
 					float avgHeadValue = this.yMovingAvgHead.calculateMovingAvg(sensorValue);
 					float delta = sensorValue - avgHeadValue;
 					
 					gestureHead = (delta > avgHeadValue * THRESHOLD_HEAD);
-				} else if (humanBodyPart.eClass().equals(LeftFoot.class)) {
+				} else if (LeftFoot.class.isInstance(humanBodyPart)) {
 					float avgFootValue = this.yMovingAvgFoot.calculateMovingAvg(sensorValue);
 					float delta = sensorValue - avgFootValue;
 					
 					gestureFootLeft = (delta > -avgFootValue * THRESHOLD_FOOT);
-				} else if (humanBodyPart.eClass().equals(RightFoot.class)) {
+				} else if (RightFoot.class.isInstance(humanBodyPart)) {
 					float avgFootValue = this.yMovingAvgFoot.calculateMovingAvg(sensorValue);
 					float delta = sensorValue - avgFootValue;
 					

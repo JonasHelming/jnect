@@ -12,14 +12,9 @@ import org.jnect.gesture.impl.MovingAverageCalculator;
 public class RightHandAboveHeadGestureDetector extends Gesture {
 
 	private static final int NUM_PERIODS = 10;
-	private static final float THRESHOLD_HEAD = 0.1f;
-	private static final float THRESHOLD_FOOT = 0.1f;
 	
 	private MovingAverageCalculator yMovingAvgHead;
 	private MovingAverageCalculator yMovingAvgRightHand;
-	
-	private boolean gestureHead = false;
-	private boolean gestureRightHandAboveHead = false;
 	
 	private boolean alreadyNotified = false;
 	
@@ -38,19 +33,13 @@ public class RightHandAboveHeadGestureDetector extends Gesture {
 			if ("y".equals(feature.getName())) {
 				float sensorValue = notification.getNewFloatValue();
 				
-				if (humanBodyPart.eClass().equals(Head.class)) {
-					float avgHeadValue = this.yMovingAvgHead.calculateMovingAvg(sensorValue);
-					float delta = sensorValue - avgHeadValue;
-					
-					gestureHead = (delta > avgHeadValue * THRESHOLD_HEAD);
-				} else if (humanBodyPart.eClass().equals(RightHand.class)) {
-					float avgFootValue = this.yMovingAvgRightHand.calculateMovingAvg(sensorValue);
-					float delta = sensorValue - avgFootValue;
-					
-					gestureRightHandAboveHead = (delta > -avgFootValue * THRESHOLD_FOOT);
+				if (Head.class.isInstance(humanBodyPart)) {
+					this.yMovingAvgHead.calculateMovingAvg(sensorValue);
+				} else if (RightHand.class.isInstance(humanBodyPart)) {
+					this.yMovingAvgRightHand.calculateMovingAvg(sensorValue);
 				} 
 				
-				if (gestureHead && gestureRightHandAboveHead) {
+				if (yMovingAvgRightHand.getMovingAvg()>yMovingAvgHead.getMovingAvg()) {
 					if (!this.alreadyNotified) {
 						this.alreadyNotified = true;
 						return true;

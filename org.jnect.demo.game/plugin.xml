@@ -5,11 +5,11 @@
    <extension
          point="org.eclipse.ui.views">
       <category
-            name="Kinect"
+            name="Jnect"
             id="org.jnect.demo.game">
       </category>
       <view
-            name="Kinect Game"
+            name="Jnect Game"
             icon="icons/sample.gif"
             category="org.jnect.demo.game"
             class="org.jnect.demo.game.views.Gameclipse"

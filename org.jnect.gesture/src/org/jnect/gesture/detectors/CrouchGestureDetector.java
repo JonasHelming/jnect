@@ -28,7 +28,7 @@ public class CrouchGestureDetector extends Gesture {
 			EAttribute feature = (EAttribute) notification.getFeature();
 			PositionedElement humanBodyPart = (PositionedElement) notification.getNotifier();
 			
-			if ("y".equals(feature.getName()) && humanBodyPart.eClass().equals(Head.class)) {
+			if ("y".equals(feature.getName()) && Head.class.isInstance(humanBodyPart)) {
 				float sensorValue = notification.getNewFloatValue();
 				float avgHeadValue = this.yMovingAvgHead.calculateMovingAvg(sensorValue);
 				float delta = avgHeadValue - sensorValue;

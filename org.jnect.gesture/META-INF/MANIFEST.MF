@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Jnect Gesture
 Bundle-SymbolicName: org.jnect.gesture
-Bundle-Version: 0.1.0
+Bundle-Version: 0.2.0
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: org.jnect.core;bundle-version="0.1.0",
  org.eclipse.emf.ecore;bundle-version="2.7.0",

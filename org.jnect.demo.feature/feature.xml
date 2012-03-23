@@ -2,7 +2,7 @@
 <feature
       id="org.jnect.demo.feature"
       label="Jnect Demo Feature"
-      version="0.1.1"
+      version="0.1.2"
       provider-name="jnect.org">
 
    <description url="http://www.example.com/description">
@@ -85,14 +85,6 @@ Everyone is permitted to copy and distribute copies of this Agreement, but in or
 
 This Agreement is governed by the laws of the State of New York and the intellectual property laws of the United States of America. No party to this Agreement will bring a legal action under this Agreement more than one year after the cause of action arose. Each party waives its rights to a jury trial in any resulting litigation.
    </license>
-
-   <includes
-         id="org.eclipse.jdt"
-         version="0.0.0"/>
-
-   <includes
-         id="org.jnect.api.feature"
-         version="0.0.0"/>
 
    <requires>
       <import feature="org.eclipse.jdt" version="3.7.2" match="compatible"/>

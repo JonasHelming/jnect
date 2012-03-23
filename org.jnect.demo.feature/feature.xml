@@ -94,6 +94,11 @@ This Agreement is governed by the laws of the State of New York and the intellec
          id="org.jnect.api.feature"
          version="0.0.0"/>
 
+   <requires>
+      <import feature="org.eclipse.jdt" version="3.7.2" match="compatible"/>
+      <import feature="org.jnect.api.feature" version="0.1.1" match="compatible"/>
+   </requires>
+
    <plugin
          id="org.jnect.demo.debug"
          download-size="0"

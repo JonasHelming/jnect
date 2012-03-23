@@ -7,7 +7,7 @@ import org.jnect.bodymodel.LeftFoot;
 import org.jnect.bodymodel.PositionedElement;
 import org.jnect.bodymodel.RightFoot;
 import org.jnect.gesture.Gesture;
-import org.jnect.gesture.impl.MovingAverageCalculator;
+import org.jnect.gesture.util.MovingAverageCalculator;
 
 
 public class JumpGestureDetector extends Gesture {
@@ -41,17 +41,20 @@ public class JumpGestureDetector extends Gesture {
 				float sensorValue = notification.getNewFloatValue();
 				
 				if (Head.class.isInstance(humanBodyPart)) {
-					float avgHeadValue = this.yMovingAvgHead.calculateMovingAvg(sensorValue);
+					this.yMovingAvgHead.addValue(sensorValue);
+					float avgHeadValue = this.yMovingAvgHead.getMovingAvg();
 					float delta = sensorValue - avgHeadValue;
 					
 					gestureHead = (delta > avgHeadValue * THRESHOLD_HEAD);
 				} else if (LeftFoot.class.isInstance(humanBodyPart)) {
-					float avgFootValue = this.yMovingAvgFoot.calculateMovingAvg(sensorValue);
+					this.yMovingAvgFoot.addValue(sensorValue);
+					float avgFootValue =this.yMovingAvgFoot.getMovingAvg(); 
 					float delta = sensorValue - avgFootValue;
 					
 					gestureFootLeft = (delta > -avgFootValue * THRESHOLD_FOOT);
 				} else if (RightFoot.class.isInstance(humanBodyPart)) {
-					float avgFootValue = this.yMovingAvgFoot.calculateMovingAvg(sensorValue);
+					this.yMovingAvgFoot.addValue(sensorValue);
+					float avgFootValue =this.yMovingAvgFoot.getMovingAvg(); 
 					float delta = sensorValue - avgFootValue;
 					
 					gestureFootRight = (delta > -avgFootValue * THRESHOLD_FOOT);

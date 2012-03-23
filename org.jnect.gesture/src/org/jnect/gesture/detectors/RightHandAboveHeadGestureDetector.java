@@ -6,7 +6,7 @@ import org.jnect.bodymodel.Head;
 import org.jnect.bodymodel.PositionedElement;
 import org.jnect.bodymodel.RightHand;
 import org.jnect.gesture.Gesture;
-import org.jnect.gesture.impl.MovingAverageCalculator;
+import org.jnect.gesture.util.MovingAverageCalculator;
 
 
 public class RightHandAboveHeadGestureDetector extends Gesture {
@@ -34,9 +34,9 @@ public class RightHandAboveHeadGestureDetector extends Gesture {
 				float sensorValue = notification.getNewFloatValue();
 				
 				if (Head.class.isInstance(humanBodyPart)) {
-					this.yMovingAvgHead.calculateMovingAvg(sensorValue);
+					this.yMovingAvgHead.addValue(sensorValue);
 				} else if (RightHand.class.isInstance(humanBodyPart)) {
-					this.yMovingAvgRightHand.calculateMovingAvg(sensorValue);
+					this.yMovingAvgRightHand.addValue(sensorValue);
 				} 
 				
 				if (yMovingAvgRightHand.getMovingAvg()>yMovingAvgHead.getMovingAvg()) {

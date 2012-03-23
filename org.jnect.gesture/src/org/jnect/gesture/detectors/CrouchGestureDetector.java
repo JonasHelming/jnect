@@ -5,7 +5,7 @@ import org.eclipse.emf.ecore.EAttribute;
 import org.jnect.bodymodel.Head;
 import org.jnect.bodymodel.PositionedElement;
 import org.jnect.gesture.Gesture;
-import org.jnect.gesture.impl.MovingAverageCalculator;
+import org.jnect.gesture.util.MovingAverageCalculator;
 
 
 public class CrouchGestureDetector extends Gesture {
@@ -30,7 +30,8 @@ public class CrouchGestureDetector extends Gesture {
 			
 			if ("y".equals(feature.getName()) && Head.class.isInstance(humanBodyPart)) {
 				float sensorValue = notification.getNewFloatValue();
-				float avgHeadValue = this.yMovingAvgHead.calculateMovingAvg(sensorValue);
+				this.yMovingAvgHead.addValue(sensorValue);
+				float avgHeadValue = this.yMovingAvgHead.getMovingAvg();
 				float delta = avgHeadValue - sensorValue;
 				
 				if (delta > avgHeadValue * THRESHOLD) {

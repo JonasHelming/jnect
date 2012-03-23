@@ -19,12 +19,15 @@ public abstract class Gesture extends EContentAdapter {
 	
 	@Override
 	public void notifyChanged(Notification notification) {
-		super.notifyChanged(notification);
-		
 		if (gestureProxy != null && isGestureDetected(notification)) {
 			this.gestureProxy.notifyGestureDetected(this.getClass());
 		}
 	}
 
+	/**
+	 * checks whether the searched gesture is detected
+	 * @param notification the notification containing the model changes
+	 * @return true if the gesture was detected
+	 */
 	protected abstract boolean isGestureDetected(Notification notification);
 }

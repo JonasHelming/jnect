@@ -39,7 +39,6 @@ public class OpenHandler {
 
 		public LeftHandAdapter(MWindow window) {
 			this.window = window;
-			// TODO Auto-generated constructor stub
 		}
 
 		@Override
@@ -47,7 +46,6 @@ public class OpenHandler {
 			PositionedElement pe=(PositionedElement)msg.getNotifier();
 			window.setX(getX(pe));
 			window.setY(getY(pe));
-			super.notifyChanged(msg);
 		}
 
 	}
@@ -56,14 +54,12 @@ public class OpenHandler {
 
 		public RightHandAdapter(MWindow window) {
 			this.window = window;
-			// TODO Auto-generated constructor stub
 		}
 
 		@Override
 		public void notifyChanged(Notification msg) {
 			window.setWidth(getWidthBetweenHands());
 			window.setHeight(getHeightBetweenHands());
-			super.notifyChanged(msg);
 		}
 	}
 	private Rectangle displayRect=Display.getDefault().getClientArea();
@@ -87,15 +83,23 @@ public class OpenHandler {
 				if(speech.equals(RESIZE)){
 					resize();
 				}
-				if(speech.equals(STOP_RESIZE)){
+				else if(speech.equals(STOP_RESIZE)){
 					stopresize();
 				}
 				
 			}
 			
+			@Override
+			public Set<String> getWords() {
+				Set<String> ret = new HashSet<String>();
+				ret.add(RESIZE);
+				ret.add(STOP_RESIZE);
+				return ret;
+			}
+			
 			private void stopresize() {
 				kinectManager.getSkeletonModel().getLeftHand().eAdapters().remove(leftHandAdapter );
-				kinectManager.getSkeletonModel().getLeftHand().eAdapters().remove(rightHandAdapter );
+				kinectManager.getSkeletonModel().getRightHand().eAdapters().remove(rightHandAdapter );
 				kinectManager.stopSkeletonTracking();
 				
 			}
@@ -104,17 +108,10 @@ public class OpenHandler {
 				kinectManager.startSkeletonTracking();
 				skeletonModel=kinectManager.getSkeletonModel();
 				kinectManager.getSkeletonModel().getLeftHand().eAdapters().add(leftHandAdapter );
-				kinectManager.getSkeletonModel().getLeftHand().eAdapters().add(rightHandAdapter );
+				kinectManager.getSkeletonModel().getRightHand().eAdapters().add(rightHandAdapter );
 				
 			}
 
-			@Override
-			public Set<String> getWords() {
-				Set<String> ret = new HashSet<String>();
-				ret.add(RESIZE);
-				ret.add(STOP_RESIZE);
-				return ret;
-			}
 		});
 		
 		kinectManager.startSpeechRecognition();

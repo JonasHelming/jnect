@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2012 jnect.org.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Eugen Neufeld - initial API and implementation
+ *******************************************************************************/
 package org.jnect.gesture.util;
 
 import java.util.LinkedList;
@@ -14,13 +24,16 @@ public class MovingAverageCalculator {
 	private float sum;
 	
 	/**
-	 * instantiate the {@link MovingAverageCalculator} with a number of periods to build the average from
-	 * @param numPeriods number of values top build the average from
+	 * instantiate the {@link MovingAverageCalculator} with a number of periods to build the average over
+	 * @param numPeriods - number of values to build the average over
 	 */
 	public MovingAverageCalculator(int numPeriods) {
 		this.numPeriods = numPeriods;
 	}
-	
+	/**
+	 * add a value to the moving average, if the number of periods is exceeded, then the oldest value is removed.  
+	 * @param num - the value to add to the moving average
+	 */
 	public void addValue(float num) {
 		sum += num;
 		window.add(num);
@@ -28,7 +41,10 @@ public class MovingAverageCalculator {
 			sum -= window.remove();
 		}
 	}
-	
+	/**
+	 * get the current moving average
+	 * @return - current value of the moving average
+	 */
 	public float getMovingAvg() {
 		return (window.size() == 0) ? 0 : sum / window.size();
 	}

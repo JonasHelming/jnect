@@ -11,7 +11,9 @@ public class RecordingBodyProvider implements IBodyProvider {
 	BodyBuffer buffer;
 
 	public RecordingBodyProvider() {
-		buffer = new BodyBuffer();
+		// FIXME: reset to normal buffer after performance improvements
+		// buffer = new BodyBuffer();
+		buffer = new MockBodyBuffer("F:\\bodyStore.txt");
 	}
 
 	@Override
@@ -26,7 +28,7 @@ public class RecordingBodyProvider implements IBodyProvider {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				buffer.flushToBody(store.getRecordingBody(), store, monitor);
+				buffer.flushToBody(store.getRecordingBody(), store, store.getCommitResolution(), monitor);
 				monitor.done();
 				return Status.OK_STATUS;
 			}

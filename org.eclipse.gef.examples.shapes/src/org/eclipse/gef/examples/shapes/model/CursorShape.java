@@ -11,6 +11,7 @@ public class CursorShape extends Shape {
 	private static final long serialVersionUID = 1;
 
 	private PositionedElement positionedElement;
+	private boolean isEditing = false;
 
 	public CursorShape(PositionedElement positionedElement) {
 		this.positionedElement = positionedElement;
@@ -26,6 +27,20 @@ public class CursorShape extends Shape {
 
 	public PositionedElement getPositionedElement() {
 		return positionedElement;
+	}
+
+	public boolean switchGefEditingMode() {
+		if (isEditing()) {
+			isEditing = false;
+			return false;
+		} else {
+			isEditing = true;
+			return true;
+		}
+	}
+
+	public boolean isEditing() {
+		return isEditing;
 	}
 
 }

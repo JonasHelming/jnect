@@ -29,7 +29,7 @@
       <command
             defaultHandler="org.eclipse.gef.examples.shapes.handler.StartGefEditingHandler"
             id="org.eclipse.gef.examples.shapes.start"
-            name="Start GEF Editing">
+            name="Start Shapes Editing">
       </command>
    </extension>
    <extension
@@ -37,7 +37,7 @@
       <menuContribution
             locationURI="toolbar:org.eclipse.ui.main.toolbar?after=org.jnect.demo.gef">
          <toolbar
-               id="org.jnect.demo.gef">
+               id="org.jnect.demo.gef.shapes">
             <command
                   commandId="org.eclipse.gef.examples.shapes.start"
                   style="push">

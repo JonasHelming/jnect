@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Jnect core
-Bundle-SymbolicName: org.jnect.core
+Bundle-SymbolicName: org.jnect.core;singleton:=true
 Bundle-Version: 0.1.3
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: org.jnect.bodymodel;bundle-version="0.1.0";visibility:=reexport,

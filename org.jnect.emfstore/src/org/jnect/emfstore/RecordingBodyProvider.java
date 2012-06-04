@@ -12,8 +12,8 @@ public class RecordingBodyProvider implements IBodyProvider {
 
 	public RecordingBodyProvider() {
 		// FIXME: reset to normal buffer after performance improvements
-		// buffer = new BodyBuffer();
-		buffer = new MockBodyBuffer("F:\\bodyStore.txt");
+		buffer = new BodyBuffer();
+		// buffer = new MockBodyBuffer("F:\\bodyStore.txt");
 	}
 
 	@Override

@@ -49,7 +49,7 @@ public class BodyBuffer {
 
 	void nextBody() {
 		float[] state = new float[NEEDED_CHANGES];
-		assert NEEDED_CHANGES == body.eContents().size();
+		assert NEEDED_CHANGES / 3 == body.eContents().size();
 		for (int i = 0; i < NEEDED_CHANGES / 3; i++) {
 			EObject elem = body.eContents().get(i);
 			if (!(elem instanceof PositionedElement))

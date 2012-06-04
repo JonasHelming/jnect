@@ -28,4 +28,9 @@ public class ReplayBodyProvider implements IReplayBodyProvider {
 		return EMFStorage.getInstance().getReplayStatesCount();
 	}
 
+	@Override
+	public void stopReplay() {
+		EMFStorage.getInstance().stopReplay();
+	}
+
 }

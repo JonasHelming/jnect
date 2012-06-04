@@ -67,6 +67,7 @@ public class EMFStorage extends Observable implements ICommitter {
 	private int replayStatesCount = 0;
 	private final int BODY_ELEMENTS_COUNT;
 	private final int OPS_PER_BODY;
+	private ReplayRunnable replayRunnable;
 
 	// BodyBuffer boBuff;
 
@@ -302,36 +303,15 @@ public class EMFStorage extends Observable implements ICommitter {
 	 * @throws EmfStoreException
 	 */
 	public void replay(final int version) {
-		final CommitVersionAndOffset versAndOffset = getCommitVersionForReplayVersion(version);
-		Thread replayThread = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				List<AbstractOperation> operations;
-
-				int currentVersion = versAndOffset.version + versAndOffset.offset;
-
-				for (int i = versAndOffset.version; i < changePackages.size(); i++) {
-					ChangePackage cp = changePackages.get(i);
-					operations = cp.getLeafOperations();
-					for (int j = 0; j < operations.size() / OPS_PER_BODY; j++) {
-						replayOneChange(operations, j);
-						currentVersion++;
-						setChanged();
-						notifyObservers(currentVersion);
-						try {
-							// pause for a moment to see changes
-							Thread.sleep(50);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-
-				}
-				// boBuff.storeToFile("F:\\bodyStore.txt");
-			}
-		});
-		replayThread.start();
+		if (replayRunnable == null) {
+			replayRunnable = new ReplayRunnable();
+		}
+		if (replayRunnable.isStopped()) {
+			final CommitVersionAndOffset versAndOffset = getCommitVersionForReplayVersion(version);
+			replayRunnable.prepare(versAndOffset, version);
+			Thread replayThread = new Thread(replayRunnable);
+			replayThread.start();
+		}
 
 	}
 
@@ -423,22 +403,13 @@ public class EMFStorage extends Observable implements ICommitter {
 	}
 
 	public void setReplayToState(int state) {
+		stopReplay();
 		if (!changePackages.isEmpty()) {
 			CommitVersionAndOffset versAndOff = getCommitVersionForReplayVersion(state);
 			ChangePackage cp = changePackages.get(versAndOff.version);
 			// replay the desired state to show the correct shape
 			replayOneChange(cp.getLeafOperations(), versAndOff.offset);
 		}
-
-		// if (!changePackages.isEmpty()) {
-		// ChangePackage cp = changePackages.get(state);
-		// cp.getOperations();
-		// List<AbstractOperation> operations = cp.getLeafOperations();
-		//
-		// for (AbstractOperation o : operations) {
-		// replayElement(o);
-		// }
-		// }
 	}
 
 	private void commitBodyChanges() {
@@ -486,6 +457,67 @@ public class EMFStorage extends Observable implements ICommitter {
 			this.version = version;
 			this.offset = offset;
 		}
+	}
+
+	private class ReplayRunnable implements Runnable {
+
+		private CommitVersionAndOffset replayFrom;
+
+		private int replayFromBodyNr;
+
+		private boolean stop;
+
+		public ReplayRunnable() {
+			stop = true;
+		}
+
+		public void prepare(CommitVersionAndOffset replayFromCS, int replayFromBodyNr) {
+			this.replayFrom = replayFromCS;
+			this.replayFromBodyNr = replayFromBodyNr;
+		}
+
+		public synchronized void stop() {
+			stop = true;
+		}
+
+		public synchronized boolean isStopped() {
+			return stop;
+		}
+
+		@Override
+		public void run() {
+			stop = false;
+			List<AbstractOperation> operations;
+
+			int currentVersion = replayFromBodyNr;
+			int innerOffset = replayFrom.offset;
+
+			for (int i = replayFrom.version; i < changePackages.size() && !isStopped(); i++) {
+				ChangePackage cp = changePackages.get(i);
+				operations = cp.getLeafOperations();
+				for (int j = innerOffset; j < operations.size() / OPS_PER_BODY && !isStopped(); j++) {
+					replayOneChange(operations, j);
+					currentVersion++;
+					setChanged();
+					notifyObservers(currentVersion);
+					try {
+						// pause for a moment to see changes
+						Thread.sleep(50);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				innerOffset = 0;
+
+			}
+			stop();
+			// boBuff.storeToFile("F:\\bodyStore.txt");
+		}
+	}
+
+	public void stopReplay() {
+		if (replayRunnable != null)
+			replayRunnable.stop();
 	}
 
 }

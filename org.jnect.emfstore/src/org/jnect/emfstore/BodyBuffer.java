@@ -65,11 +65,10 @@ public class BodyBuffer {
 	public void flushToBody(Body flushBody, ICommitter committer, int commitResolution, IProgressMonitor monitor) {
 		final int BODY_PART_COUNT = NEEDED_CHANGES / 3;
 		assert flushBody.eContents().size() == BODY_PART_COUNT;
-		int workload = buffer.size();
 		int commitCount = buffer.size() / commitResolution;
 		int roundUp = buffer.size() % commitResolution == 0 ? 0 : 1;
 		commitCount += roundUp;
-		monitor.beginTask("Saving to EMFStore", buffer.size() + commitCount);
+		monitor.beginTask("Saving to EMFStore Server", buffer.size() + commitCount);
 		EList<EObject> bodyContents = flushBody.eContents();
 
 		long timeBefore = Calendar.getInstance().getTimeInMillis();
@@ -78,6 +77,7 @@ public class BodyBuffer {
 			Iterator<float[]> bufferIt = buffer.iterator();
 			int collectedBodyChanges = 0;
 			while (bufferIt.hasNext() && !monitor.isCanceled()) {
+				monitor.subTask("Writing to EMFStore...");
 				float[] values = bufferIt.next();
 				for (int i = 0; i < BODY_PART_COUNT/* - 1 */; i++) {
 					EObject elem = bodyContents.get(i);
@@ -90,6 +90,7 @@ public class BodyBuffer {
 				}
 				collectedBodyChanges++;
 				if (collectedBodyChanges == commitResolution) {
+					monitor.subTask("Committing...");
 					committer.commit();
 					collectedBodyChanges = 0;
 					monitor.worked(1);

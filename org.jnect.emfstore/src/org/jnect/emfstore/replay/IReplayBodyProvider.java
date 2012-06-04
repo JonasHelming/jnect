@@ -14,4 +14,9 @@ public interface IReplayBodyProvider {
 	 */
 	public int getReplayStatesCount();
 
+	/**
+	 * Stops the replay if it is in progress.
+	 */
+	public void stopReplay();
+
 }

@@ -29,7 +29,7 @@ public class SliderDialog extends Dialog implements Observer {
 	private int max;
 
 	public SliderDialog(IReplayBodyProvider rbp) {
-		super(new Shell(Display.getDefault()), SWT.NONE);
+		super(new Shell(Display.getDefault(), SWT.APPLICATION_MODAL | SWT.SHELL_TRIM), SWT.NONE);
 		Shell dlgShell = this.getParent();
 		dlgShell.setSize(250, 125);
 		dlgShell.addDisposeListener(new DisposeListener() {
@@ -37,6 +37,14 @@ public class SliderDialog extends Dialog implements Observer {
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
 				disposeDialog();
+			}
+		});
+		dlgShell.addListener(SWT.Close, new Listener() {
+
+			@Override
+			public void handleEvent(Event event) {
+				replayBodyProvider.stopReplay();
+
 			}
 		});
 		this.replayBodyProvider = rbp;
@@ -102,6 +110,12 @@ public class SliderDialog extends Dialog implements Observer {
 		});
 
 		parent.open();
+		while (!parent.isDisposed()) {
+			if (!parent.getDisplay().readAndDispatch()) {
+				parent.getDisplay().sleep();
+			}
+		}
+
 	}
 
 	@Override

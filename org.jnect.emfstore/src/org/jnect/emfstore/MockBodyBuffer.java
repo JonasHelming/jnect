@@ -31,10 +31,12 @@ public class MockBodyBuffer extends BodyBuffer {
 			while ((line = floatArrayReader.readLine()) != null) {
 				String[] stringVals = line.split(" ");
 				float[] vals = new float[stringVals.length];
+				assert stringVals.length == 0 || stringVals.length == NEEDED_CHANGES; // 0 for empty lines
 				for (int i = 0; i < stringVals.length; i++) {
 					vals[i] = Float.valueOf(stringVals[i]);
 				}
-				loadedBody.add(vals);
+				if (vals.length == NEEDED_CHANGES)
+					loadedBody.add(vals);
 			}
 		} catch (FileNotFoundException e) {
 			printNoBuffMessage();

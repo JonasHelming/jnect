@@ -65,7 +65,11 @@ public class BodyBuffer {
 	public void flushToBody(Body flushBody, ICommitter committer, int commitResolution, IProgressMonitor monitor) {
 		final int BODY_PART_COUNT = NEEDED_CHANGES / 3;
 		assert flushBody.eContents().size() == BODY_PART_COUNT;
-		monitor.beginTask("Saving to EMFStore", buffer.size());
+		int workload = buffer.size();
+		int commitCount = buffer.size() / commitResolution;
+		int roundUp = buffer.size() % commitResolution == 0 ? 0 : 1;
+		commitCount += roundUp;
+		monitor.beginTask("Saving to EMFStore", buffer.size() + commitCount);
 		EList<EObject> bodyContents = flushBody.eContents();
 
 		long timeBefore = Calendar.getInstance().getTimeInMillis();
@@ -75,7 +79,6 @@ public class BodyBuffer {
 			int collectedBodyChanges = 0;
 			while (bufferIt.hasNext() && !monitor.isCanceled()) {
 				float[] values = bufferIt.next();
-				// flushBody.eSetDeliver(false);
 				for (int i = 0; i < BODY_PART_COUNT/* - 1 */; i++) {
 					EObject elem = bodyContents.get(i);
 					if (!(elem instanceof PositionedElement))
@@ -89,11 +92,14 @@ public class BodyBuffer {
 				if (collectedBodyChanges == commitResolution) {
 					committer.commit();
 					collectedBodyChanges = 0;
+					monitor.worked(1);
 				}
 				monitor.worked(1);
 			}
 			if (collectedBodyChanges != 0) {
+				assert roundUp == 1 : "Only when the number of changes is not dividable by the commit resolution there should be changes left...";
 				committer.commit();
+				monitor.worked(1);
 			}
 			buffer.clear();
 		}
@@ -112,24 +118,28 @@ public class BodyBuffer {
 	 */
 	private void setAndForceModification(PositionedElement pos, Coordinate coord, float newValue) {
 		float oldVal;
-		float delta = 0.000001f;
+		// change the smallest amount possible
+		// Note: Math.nextAfter() is Java 1.6
+		// Use Float.floatToIntBits(arg0), increment it by one and reassign it if java 1.5 should be a requirement in
+		// the future
+
 		switch (coord) {
 		case X:
 			oldVal = pos.getX();
 			if (oldVal == newValue)
-				newValue += delta;
+				newValue = Math.nextAfter(newValue, newValue + 1);
 			pos.setX(newValue);
 			break;
 		case Y:
 			oldVal = pos.getY();
 			if (oldVal == newValue)
-				newValue += delta;
+				newValue = Math.nextAfter(newValue, newValue + 1);
 			pos.setY(newValue);
 			break;
 		case Z:
 			oldVal = pos.getZ();
 			if (oldVal == newValue)
-				newValue += delta;
+				newValue = Math.nextAfter(newValue, newValue + 1);
 			pos.setZ(newValue);
 			break;
 		default:

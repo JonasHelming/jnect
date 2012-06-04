@@ -66,6 +66,7 @@ public class EMFStorage extends Observable implements ICommitter {
 	private boolean changePackagesUpdateNeeded;
 	private int replayStatesCount = 0;
 	private final int BODY_ELEMENTS_COUNT;
+	private final int OPS_PER_BODY;
 
 	// BodyBuffer boBuff;
 
@@ -80,6 +81,7 @@ public class EMFStorage extends Observable implements ICommitter {
 		this.changePackagesUpdateNeeded = true;
 		connectToEMFStoreAndInit();
 		BODY_ELEMENTS_COUNT = recordingBody.eContents().size();
+		OPS_PER_BODY = BODY_ELEMENTS_COUNT * 3;
 	}
 
 	private void connectToEMFStoreAndInit() {
@@ -283,8 +285,9 @@ public class EMFStorage extends Observable implements ICommitter {
 				changePackagesUpdateNeeded = false;
 				replayStatesCount = 0;
 				for (ChangePackage cp : changePackages) {
-					assert cp.getLeafOperations().size() % (BODY_ELEMENTS_COUNT * 3) == 0;
-					replayStatesCount += cp.getLeafOperations().size() / 3 / BODY_ELEMENTS_COUNT;
+					assert cp.getLeafOperations().size() % (OPS_PER_BODY) == 0 : "Operation size should be multitude of "
+						+ OPS_PER_BODY + " but was: " + cp.getLeafOperations().size();
+					replayStatesCount += cp.getLeafOperations().size() / OPS_PER_BODY;
 				}
 			} catch (EmfStoreException e) {
 				e.printStackTrace();
@@ -311,23 +314,19 @@ public class EMFStorage extends Observable implements ICommitter {
 				for (int i = versAndOffset.version; i < changePackages.size(); i++) {
 					ChangePackage cp = changePackages.get(i);
 					operations = cp.getLeafOperations();
-
-					for (int j = 0; j < cp.getLeafOperations().size(); j++) {
-						AbstractOperation o = operations.get(j);
-						replayElement(o);
-
-						if (j % (BODY_ELEMENTS_COUNT * 3) == 0) {
-							currentVersion++;
-							setChanged();
-							notifyObservers(currentVersion);
-							try {
-								// pause for a moment to see changes
-								Thread.sleep(50);
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
+					for (int j = 0; j < operations.size() / OPS_PER_BODY; j++) {
+						replayOneChange(operations, j);
+						currentVersion++;
+						setChanged();
+						notifyObservers(currentVersion);
+						try {
+							// pause for a moment to see changes
+							Thread.sleep(50);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
 						}
 					}
+
 				}
 				// boBuff.storeToFile("F:\\bodyStore.txt");
 			}
@@ -336,13 +335,26 @@ public class EMFStorage extends Observable implements ICommitter {
 
 	}
 
+	protected void replayOneChange(List<AbstractOperation> operations, int bodyOffset) {
+		int startPos = bodyOffset * OPS_PER_BODY;
+		assert operations.size() >= startPos + OPS_PER_BODY - 1 : "Should be dividable by " + OPS_PER_BODY
+			+ " but was " + operations.size();
+
+		for (int i = startPos; i < startPos + OPS_PER_BODY; i++) {
+			AbstractOperation o = operations.get(i);
+			replayElement(o);
+		}
+
+	}
+
 	private CommitVersionAndOffset getCommitVersionForReplayVersion(int repVersion) {
 		int countedBodies = 0;
 		for (int i = 0; i < changePackages.size(); i++) {
 			ChangePackage cp = changePackages.get(i);
-			countedBodies += cp.getLeafOperations().size() / 3 / BODY_ELEMENTS_COUNT;
-			if (countedBodies >= repVersion)
-				return new CommitVersionAndOffset(i, countedBodies - repVersion);
+			int currentCount = cp.getLeafOperations().size() / 3 / BODY_ELEMENTS_COUNT;
+			if (countedBodies + currentCount > repVersion)
+				return new CommitVersionAndOffset(i, repVersion - countedBodies);
+			countedBodies += currentCount;
 		}
 		assert false : "The last change package should at the very least contain the searched repVersion!";
 		return new CommitVersionAndOffset(changePackages.size() - 1, 0);
@@ -412,14 +424,21 @@ public class EMFStorage extends Observable implements ICommitter {
 
 	public void setReplayToState(int state) {
 		if (!changePackages.isEmpty()) {
-			ChangePackage cp = changePackages.get(state);
-			cp.getOperations();
-			List<AbstractOperation> operations = cp.getLeafOperations();
-
-			for (AbstractOperation o : operations) {
-				replayElement(o);
-			}
+			CommitVersionAndOffset versAndOff = getCommitVersionForReplayVersion(state);
+			ChangePackage cp = changePackages.get(versAndOff.version);
+			// replay the desired state to show the correct shape
+			replayOneChange(cp.getLeafOperations(), versAndOff.offset);
 		}
+
+		// if (!changePackages.isEmpty()) {
+		// ChangePackage cp = changePackages.get(state);
+		// cp.getOperations();
+		// List<AbstractOperation> operations = cp.getLeafOperations();
+		//
+		// for (AbstractOperation o : operations) {
+		// replayElement(o);
+		// }
+		// }
 	}
 
 	private void commitBodyChanges() {
@@ -456,7 +475,7 @@ public class EMFStorage extends Observable implements ICommitter {
 	 * @return The number of body changes squashed into one commit.
 	 */
 	public int getCommitResolution() {
-		return 200;
+		return 20;
 	}
 
 	private class CommitVersionAndOffset {

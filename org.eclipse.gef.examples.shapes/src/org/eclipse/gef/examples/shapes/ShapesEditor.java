@@ -29,9 +29,11 @@ import org.eclipse.gef.ContextMenuProvider;
 import org.eclipse.gef.DefaultEditDomain;
 import org.eclipse.gef.EditPartViewer;
 import org.eclipse.gef.GraphicalViewer;
+import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.dnd.TemplateTransferDragSourceListener;
 import org.eclipse.gef.dnd.TemplateTransferDropTargetListener;
 import org.eclipse.gef.editparts.ScalableFreeformRootEditPart;
+import org.eclipse.gef.examples.shapes.helper.GefEditingHelper;
 import org.eclipse.gef.examples.shapes.model.ShapesDiagram;
 import org.eclipse.gef.examples.shapes.parts.ShapesEditPartFactory;
 import org.eclipse.gef.examples.shapes.parts.ShapesTreeEditPartFactory;
@@ -164,6 +166,9 @@ public class ShapesEditor extends GraphicalEditorWithFlyoutPalette {
 	 * )
 	 */
 	public void doSave(IProgressMonitor monitor) {
+		// pause gef editing while saving
+		GefEditingHelper.INSTANCE.pause();
+
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		try {
 			createOutputStream(out);
@@ -188,6 +193,9 @@ public class ShapesEditor extends GraphicalEditorWithFlyoutPalette {
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
 		}
+
+		// resume gef editing
+		GefEditingHelper.INSTANCE.unpause();
 	}
 
 	/*
@@ -306,6 +314,10 @@ public class ShapesEditor extends GraphicalEditorWithFlyoutPalette {
 		} catch (ClassNotFoundException e) {
 			handleLoadException(e);
 		}
+	}
+
+	public void executeOnCommandStack(Command c) {
+		getCommandStack().execute(c);
 	}
 
 	/**

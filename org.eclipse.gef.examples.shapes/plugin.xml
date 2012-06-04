@@ -31,6 +31,11 @@
             id="org.eclipse.gef.examples.shapes.start"
             name="Start Shapes Editing">
       </command>
+      <command
+            defaultHandler="org.eclipse.gef.examples.shapes.handler.StopGefEditingHandler"
+            id="org.eclipse.gef.examples.shapes.stop"
+            name="Stop Shapes Editing">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.menus">
@@ -40,6 +45,12 @@
                id="org.jnect.demo.gef.shapes">
             <command
                   commandId="org.eclipse.gef.examples.shapes.start"
+                  label="Start Shapes Editing"
+                  style="push">
+            </command>
+            <command
+                  commandId="org.eclipse.gef.examples.shapes.stop"
+                  label="Stop Shapes Editing"
                   style="push">
             </command>
          </toolbar>

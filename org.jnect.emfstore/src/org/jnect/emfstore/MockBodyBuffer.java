@@ -24,7 +24,7 @@ public class MockBodyBuffer extends BodyBuffer {
 		}
 
 		loadedBody = new ArrayList<float[]>();
-		BufferedReader floatArrayReader;
+		BufferedReader floatArrayReader = null;
 		try {
 			floatArrayReader = new BufferedReader(new FileReader(buffFile));
 			String line;
@@ -44,6 +44,13 @@ public class MockBodyBuffer extends BodyBuffer {
 		} catch (IOException e) {
 			printNoBuffMessage();
 			e.printStackTrace();
+		} finally {
+			try {
+				if (floatArrayReader != null)
+					floatArrayReader.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		buffer.addAll(loadedBody);
 	}
@@ -59,4 +66,5 @@ public class MockBodyBuffer extends BodyBuffer {
 	private void printNoBuffMessage() {
 		System.out.println("Could not load the hard disk buffer.");
 	}
+
 }

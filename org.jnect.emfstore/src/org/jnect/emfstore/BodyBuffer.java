@@ -1,5 +1,9 @@
 package org.jnect.emfstore;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Iterator;
@@ -103,6 +107,7 @@ public class BodyBuffer {
 				monitor.worked(1);
 			}
 			buffer.clear();
+			org.eclipse.emf.emfstore.client.model.Configuration.setAutoSave(true);
 		}
 		long timeAfter = Calendar.getInstance().getTimeInMillis();
 		System.out.println("Saving took: " + (timeAfter - timeBefore) / 1000 + " seconds.");
@@ -150,22 +155,30 @@ public class BodyBuffer {
 		assert oldVal != newValue;
 
 	}
-	// public void storeToFile(String string) {
-	// try {
-	// BufferedWriter writer = new BufferedWriter(new FileWriter(new File(string)));
-	// StringBuilder currLine = new StringBuilder();
-	// for (float[] vals : buffer) {
-	//
-	// for (float value : vals) {
-	// currLine.append(value + " ");
-	// }
-	// writer.write(currLine.substring(0, currLine.length() - 1) + "\n");
-	// currLine.setLength(0);
-	// }
-	// writer.close();
-	// } catch (IOException e) {
-	// // TODO Auto-generated catch block
-	// e.printStackTrace();
-	// }
-	// }
+
+	public void storeToFile(String string) {
+		BufferedWriter writer = null;
+		try {
+			writer = new BufferedWriter(new FileWriter(new File(string)));
+			StringBuilder currLine = new StringBuilder();
+			for (float[] vals : buffer) {
+
+				for (float value : vals) {
+					currLine.append(value + " ");
+				}
+				writer.write(currLine.substring(0, currLine.length() - 1) + "\n");
+				currLine.setLength(0);
+			}
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (writer != null)
+					writer.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 }

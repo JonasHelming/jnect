@@ -69,8 +69,6 @@ public class EMFStorage extends Observable implements ICommitter {
 	private final int OPS_PER_BODY;
 	private ReplayRunnable replayRunnable;
 
-	// BodyBuffer boBuff;
-
 	public static EMFStorage getInstance() {
 		if (INSTANCE == null) {
 			INSTANCE = new EMFStorage();
@@ -148,7 +146,6 @@ public class EMFStorage extends Observable implements ICommitter {
 						recordingBody = createAndFillBody();
 						project.addModelElement(recordingBody);
 					}
-					// recordingBody.eAdapters().add(new CommitBodyChangesAdapter());
 					projectSpace.commit(createLogMessage(usersession.getUsername(), "commit initial body"), null,
 						new NullProgressMonitor());
 				} catch (AccessControlException e) {
@@ -265,11 +262,9 @@ public class EMFStorage extends Observable implements ICommitter {
 	}
 
 	public Body getReplayingBody() {
-		// FIXME delete outcommented code
 		if (replayBody == null)
 			replayBody = createAndFillBody();
-		// boBuff = new BodyBuffer();
-		// replayBody = boBuff.getBufferBody();
+
 		return replayBody;
 	}
 
@@ -423,20 +418,6 @@ public class EMFStorage extends Observable implements ICommitter {
 		}
 	}
 
-	// private class CommitBodyChangesAdapter extends EContentAdapter {
-	// // 3 changes (x, y, z) in every body element
-	// private final int NEEDED_CHANGES = 3 * recordingBody.eContents().size();
-	//
-	// @Override
-	// public void notifyChanged(Notification notification) {
-	// super.notifyChanged(notification);
-	// // once there a NEEDED_CHANGES local changes all body elements are updated and they can be committed
-	// if (projectSpace.getLocalOperations().getOperations().size() == NEEDED_CHANGES) {
-	// commitBodyChanges();
-	// }
-	// }
-	// }
-
 	@Override
 	public void commit() {
 		commitBodyChanges();
@@ -511,7 +492,6 @@ public class EMFStorage extends Observable implements ICommitter {
 
 			}
 			stop();
-			// boBuff.storeToFile("F:\\bodyStore.txt");
 		}
 	}
 

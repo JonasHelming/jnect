@@ -102,6 +102,7 @@ public class EMFStorage extends Observable implements ICommitter {
 		compOpHandle = projectSpace.beginCompositeOperation();
 		// 3 changes (x, y, z) in every body element
 		NEEDED_CHANGES = BODY_ELEMENTS_COUNT * 3;
+		replayBody = createAndFillBody();
 	}
 
 	private void connectToEMFStoreAndInit() {
@@ -286,9 +287,6 @@ public class EMFStorage extends Observable implements ICommitter {
 	}
 
 	public Body getReplayingBody() {
-		if (replayBody == null)
-			replayBody = createAndFillBody();
-
 		return replayBody;
 	}
 
@@ -433,13 +431,21 @@ public class EMFStorage extends Observable implements ICommitter {
 	private void commitBodyChanges() {
 		// commit the pending changes of the project to the EMF Store
 		try {
-			// ((ProjectSpaceBase) projectSpace).save();
 			// projectSpace.setDirty(true);
+			// ((ProjectSpaceBase) projectSpace).save();
+			if (compOpHandle != null) {
+				try {
+					compOpHandle.abort();
+				} catch (InvalidHandleException e) {
+					e.printStackTrace();
+				}
+			}
 			projectSpace.commit(
 				createLogMessage(usersession.getUsername(), "Commiting " + recordedBodyCount + " new body frames."),
 				null, new NullProgressMonitor());
 			changePackagesUpdateNeeded = true;
 			recordedBodyCount = 0;
+			compOpHandle = projectSpace.beginCompositeOperation();
 		} catch (EmfStoreException e) {
 			e.printStackTrace();
 		}
@@ -532,11 +538,13 @@ public class EMFStorage extends Observable implements ICommitter {
 
 		@Override
 		public void notifyChanged(Notification notification) {
+			super.notifyChanged(notification);
 			if (++currChanges == NEEDED_CHANGES) {
 				currChanges = 0;
 				try {
 					compOpHandle.end("New Body frame", "Added new frame to store", projectSpace.getProject()
 						.getModelElementId(recordingBody));
+					projectSpace.setDirty(true);
 					recordedBodyCount++;
 				} catch (InvalidHandleException e) {
 					e.printStackTrace();

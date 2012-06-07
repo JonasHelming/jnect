@@ -4,9 +4,9 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *
+ * 
  * Contributors:
- *     Eugen Neufeld - initial API and implementation
+ * Eugen Neufeld - initial API and implementation
  *******************************************************************************/
 
 package org.jnect.core;
@@ -16,6 +16,7 @@ import org.jnect.core.impl.KinectManagerImpl;
 
 /**
  * Main interface for registering listeners and opening the connection to the kinect
+ * 
  * @author Eugen Neufeld
  * 
  */
@@ -54,36 +55,54 @@ public interface KinectManager {
 	 * starts the skeleton tracking
 	 */
 	void startSkeletonTracking();
+
 	/**
 	 * stops the skeleton tracking
 	 */
 	void stopSkeletonTracking();
+
 	/**
 	 * checks wheteher the skeleton tracking is running
+	 * 
 	 * @return true if skeleton tracking is running, false otherwise
 	 */
 	boolean isSkeletonTrackingStarted();
+
 	/**
 	 * adds a {@link SpeechListener}
+	 * 
 	 * @param listener - the {@link SpeechListener} to add
 	 */
 	void addSpeechListener(SpeechListener listener);
+
 	/**
 	 * removes a {@link SpeechListener}
+	 * 
 	 * @param listener - the {@link SpeechListener} to remove
 	 */
 	void removeSpeechListener(SpeechListener listener);
+
 	/**
 	 * starts the speech recognition
 	 */
 	void startSpeechRecognition();
+
 	/**
 	 * stops the speech recognition
 	 */
 	void stopSpeechRecognition();
+
 	/**
 	 * checks whether the speech recognition is running
+	 * 
 	 * @return true if speech recognition is running, false otherwise
 	 */
 	boolean isSpeechRecognitionStarted();
+
+	/**
+	 * Toggles the state recording state of the Kinect Manager.
+	 * 
+	 * @return true if recording was successfully switched on, false if it was turned off or could not be turned on
+	 */
+	boolean switchRecording();
 }

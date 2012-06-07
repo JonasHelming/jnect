@@ -8,9 +8,10 @@ import org.jnect.bodymodel.Body;
 import org.jnect.core.IBodyProvider;
 
 public class RecordingBodyProvider implements IBodyProvider {
+	Body nonRecordingBody;
 
 	@Override
-	public Body getBody() {
+	public Body getRecordingBody() {
 		return EMFStorage.getInstance().getRecordingBody();
 	}
 
@@ -28,6 +29,19 @@ public class RecordingBodyProvider implements IBodyProvider {
 		};
 		commitJob.setUser(true); // show dialog
 		commitJob.schedule();
+	}
+
+	@Override
+	public Body getNonRecordingBody() {
+		if (nonRecordingBody == null) {
+			nonRecordingBody = EMFStorage.createAndFillBody();
+		}
+		return nonRecordingBody;
+	}
+
+	@Override
+	public boolean canRecord() {
+		return true;
 	}
 
 }

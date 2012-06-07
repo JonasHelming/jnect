@@ -82,6 +82,8 @@ public class EMFStorage extends Observable implements ICommitter {
 	 */
 	private int recordedBodyCount = 0;
 
+	private CompositeOperationHandle compOpHandle;
+
 	/**
 	 * @return The singleton EMFStorage object. Tries to setup the connection to the EMFStore Server.
 	 */
@@ -97,6 +99,7 @@ public class EMFStorage extends Observable implements ICommitter {
 		connectToEMFStoreAndInit();
 		BODY_ELEMENTS_COUNT = recordingBody.eContents().size();
 		recordingBody.eAdapters().add(new CommitBodyChangesAdapter());
+		compOpHandle = projectSpace.beginCompositeOperation();
 		// 3 changes (x, y, z) in every body element
 		NEEDED_CHANGES = BODY_ELEMENTS_COUNT * 3;
 	}
@@ -430,6 +433,8 @@ public class EMFStorage extends Observable implements ICommitter {
 	private void commitBodyChanges() {
 		// commit the pending changes of the project to the EMF Store
 		try {
+			// ((ProjectSpaceBase) projectSpace).save();
+			projectSpace.setDirty(true);
 			projectSpace.commit(
 				createLogMessage(usersession.getUsername(), "Commiting " + recordedBodyCount + " new body frames."),
 				null, new NullProgressMonitor());
@@ -524,22 +529,19 @@ public class EMFStorage extends Observable implements ICommitter {
 
 	private class CommitBodyChangesAdapter extends EContentAdapter {
 		private int currChanges = 0;
-		private CompositeOperationHandle compOpHandler = null;
 
 		@Override
 		public void notifyChanged(Notification notification) {
-			if (compOpHandler == null) {
-				compOpHandler = projectSpace.beginCompositeOperation();
-			}
 			if (++currChanges == NEEDED_CHANGES) {
 				currChanges = 0;
 				try {
-					compOpHandler.end("New Body frame", "", projectSpace.getProject().getModelElementId(recordingBody));
+					compOpHandle.end("New Body frame", "Added new frame to store", projectSpace.getProject()
+						.getModelElementId(recordingBody));
 					recordedBodyCount++;
 				} catch (InvalidHandleException e) {
 					e.printStackTrace();
 				}
-				compOpHandler = null;
+				compOpHandle = projectSpace.beginCompositeOperation();
 			}
 
 		}

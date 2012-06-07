@@ -8,15 +8,10 @@ import org.jnect.bodymodel.Body;
 import org.jnect.core.IBodyProvider;
 
 public class RecordingBodyProvider implements IBodyProvider {
-	BodyBuffer buffer;
-
-	public RecordingBodyProvider() {
-		buffer = new BodyBuffer();
-	}
 
 	@Override
 	public Body getBody() {
-		return buffer.getBufferBody();
+		return EMFStorage.getInstance().getRecordingBody();
 	}
 
 	@Override
@@ -26,7 +21,7 @@ public class RecordingBodyProvider implements IBodyProvider {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				buffer.flushToBody(store.getRecordingBody(), store, store.getCommitResolution(), monitor);
+				store.commit();
 				monitor.done();
 				return Status.OK_STATUS;
 			}

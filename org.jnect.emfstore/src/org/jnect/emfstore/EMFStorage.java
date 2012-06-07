@@ -7,12 +7,16 @@ import java.util.List;
 import java.util.Observable;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.util.EContentAdapter;
+import org.eclipse.emf.emfstore.client.model.CompositeOperationHandle;
 import org.eclipse.emf.emfstore.client.model.ModelFactory;
 import org.eclipse.emf.emfstore.client.model.ProjectSpace;
 import org.eclipse.emf.emfstore.client.model.Usersession;
 import org.eclipse.emf.emfstore.client.model.Workspace;
 import org.eclipse.emf.emfstore.client.model.WorkspaceManager;
+import org.eclipse.emf.emfstore.client.model.exceptions.InvalidHandleException;
 import org.eclipse.emf.emfstore.client.model.impl.WorkspaceImpl;
 import org.eclipse.emf.emfstore.client.model.util.EMFStoreClientUtil;
 import org.eclipse.emf.emfstore.client.model.util.EMFStoreCommand;
@@ -52,10 +56,15 @@ import org.jnect.bodymodel.RightShoulder;
 import org.jnect.bodymodel.RightWrist;
 import org.jnect.bodymodel.Spine;
 
+/**
+ * @author aleaum
+ *         This class offers the backbone for recording changing body models e.g. for storing Kinect data.
+ */
 public class EMFStorage extends Observable implements ICommitter {
 
 	private static EMFStorage INSTANCE;
 	private static String PROJECT_NAME = "jnectEMFStorage";
+	private int NEEDED_CHANGES;
 
 	ProjectSpace projectSpace;
 	Usersession usersession;
@@ -66,9 +75,16 @@ public class EMFStorage extends Observable implements ICommitter {
 	private boolean changePackagesUpdateNeeded;
 	private int replayStatesCount = 0;
 	private final int BODY_ELEMENTS_COUNT;
-	private final int OPS_PER_BODY;
 	private ReplayRunnable replayRunnable;
 
+	/**
+	 * Counts how many new bodies have been recorded since the last commit.
+	 */
+	private int recordedBodyCount = 0;
+
+	/**
+	 * @return The singleton EMFStorage object. Tries to setup the connection to the EMFStore Server.
+	 */
 	public static EMFStorage getInstance() {
 		if (INSTANCE == null) {
 			INSTANCE = new EMFStorage();
@@ -80,7 +96,9 @@ public class EMFStorage extends Observable implements ICommitter {
 		this.changePackagesUpdateNeeded = true;
 		connectToEMFStoreAndInit();
 		BODY_ELEMENTS_COUNT = recordingBody.eContents().size();
-		OPS_PER_BODY = BODY_ELEMENTS_COUNT * 3;
+		recordingBody.eAdapters().add(new CommitBodyChangesAdapter());
+		// 3 changes (x, y, z) in every body element
+		NEEDED_CHANGES = BODY_ELEMENTS_COUNT * 3;
 	}
 
 	private void connectToEMFStoreAndInit() {
@@ -148,6 +166,9 @@ public class EMFStorage extends Observable implements ICommitter {
 					}
 					projectSpace.commit(createLogMessage(usersession.getUsername(), "commit initial body"), null,
 						new NullProgressMonitor());
+
+					org.eclipse.emf.emfstore.client.model.Configuration.setAutoSave(false);
+
 				} catch (AccessControlException e) {
 					ModelUtil.logException(e);
 				} catch (EmfStoreException e) {
@@ -281,9 +302,7 @@ public class EMFStorage extends Observable implements ICommitter {
 				changePackagesUpdateNeeded = false;
 				replayStatesCount = 0;
 				for (ChangePackage cp : changePackages) {
-					assert cp.getLeafOperations().size() % (OPS_PER_BODY) == 0 : "Operation size should be multitude of "
-						+ OPS_PER_BODY + " but was: " + cp.getLeafOperations().size();
-					replayStatesCount += cp.getLeafOperations().size() / OPS_PER_BODY;
+					replayStatesCount += cp.getOperations().size();
 				}
 			} catch (EmfStoreException e) {
 				e.printStackTrace();
@@ -311,12 +330,13 @@ public class EMFStorage extends Observable implements ICommitter {
 	}
 
 	protected void replayOneChange(List<AbstractOperation> operations, int bodyOffset) {
-		int startPos = bodyOffset * OPS_PER_BODY;
-		assert operations.size() >= startPos + OPS_PER_BODY - 1 : "Should be dividable by " + OPS_PER_BODY
-			+ " but was " + operations.size();
+		int startPos = bodyOffset;
+		assert operations.size() >= startPos - 1 : "Operations should contain the requested body index " + startPos
+			+ " but had size " + operations.size() + ".";
 
-		for (int i = startPos; i < startPos + OPS_PER_BODY; i++) {
-			AbstractOperation o = operations.get(i);
+		List<AbstractOperation> leafOperations = operations.get(bodyOffset).getLeafOperations();
+
+		for (AbstractOperation o : leafOperations) {
 			replayElement(o);
 		}
 
@@ -326,7 +346,7 @@ public class EMFStorage extends Observable implements ICommitter {
 		int countedBodies = 0;
 		for (int i = 0; i < changePackages.size(); i++) {
 			ChangePackage cp = changePackages.get(i);
-			int currentCount = cp.getLeafOperations().size() / 3 / BODY_ELEMENTS_COUNT;
+			int currentCount = cp.getOperations().size();
 			if (countedBodies + currentCount > repVersion)
 				return new CommitVersionAndOffset(i, repVersion - countedBodies);
 			countedBodies += currentCount;
@@ -410,9 +430,11 @@ public class EMFStorage extends Observable implements ICommitter {
 	private void commitBodyChanges() {
 		// commit the pending changes of the project to the EMF Store
 		try {
-			projectSpace.commit(createLogMessage(usersession.getUsername(), "commit new state"), null,
-				new NullProgressMonitor());
+			projectSpace.commit(
+				createLogMessage(usersession.getUsername(), "Commiting " + recordedBodyCount + " new body frames."),
+				null, new NullProgressMonitor());
 			changePackagesUpdateNeeded = true;
+			recordedBodyCount = 0;
 		} catch (EmfStoreException e) {
 			e.printStackTrace();
 		}
@@ -468,16 +490,16 @@ public class EMFStorage extends Observable implements ICommitter {
 		@Override
 		public void run() {
 			stop = false;
-			List<AbstractOperation> operations;
+			List<AbstractOperation> compositeBodyOps;
 
 			int currentVersion = replayFromBodyNr;
 			int innerOffset = replayFrom.offset;
 
 			for (int i = replayFrom.version; i < changePackages.size() && !isStopped(); i++) {
 				ChangePackage cp = changePackages.get(i);
-				operations = cp.getLeafOperations();
-				for (int j = innerOffset; j < operations.size() / OPS_PER_BODY && !isStopped(); j++) {
-					replayOneChange(operations, j);
+				compositeBodyOps = cp.getOperations();
+				for (int j = innerOffset; j < compositeBodyOps.size() && !isStopped(); j++) {
+					replayOneChange(compositeBodyOps, j);
 					currentVersion++;
 					setChanged();
 					notifyObservers(currentVersion);
@@ -498,6 +520,29 @@ public class EMFStorage extends Observable implements ICommitter {
 	public void stopReplay() {
 		if (replayRunnable != null)
 			replayRunnable.stop();
+	}
+
+	private class CommitBodyChangesAdapter extends EContentAdapter {
+		private int currChanges = 0;
+		private CompositeOperationHandle compOpHandler = null;
+
+		@Override
+		public void notifyChanged(Notification notification) {
+			if (compOpHandler == null) {
+				compOpHandler = projectSpace.beginCompositeOperation();
+			}
+			if (++currChanges == NEEDED_CHANGES) {
+				currChanges = 0;
+				try {
+					compOpHandler.end("New Body frame", "", projectSpace.getProject().getModelElementId(recordingBody));
+					recordedBodyCount++;
+				} catch (InvalidHandleException e) {
+					e.printStackTrace();
+				}
+				compOpHandler = null;
+			}
+
+		}
 	}
 
 }

@@ -426,7 +426,7 @@ public class EMFStorage extends Observable implements ICommitter {
 			CommitVersionAndOffset versAndOff = getCommitVersionForReplayVersion(state);
 			ChangePackage cp = changePackages.get(versAndOff.version);
 			// replay the desired state to show the correct shape
-			replayOneChange(cp.getLeafOperations(), versAndOff.offset);
+			replayOneChange(cp.getOperations(), versAndOff.offset);
 		}
 	}
 
@@ -434,7 +434,7 @@ public class EMFStorage extends Observable implements ICommitter {
 		// commit the pending changes of the project to the EMF Store
 		try {
 			// ((ProjectSpaceBase) projectSpace).save();
-			projectSpace.setDirty(true);
+			// projectSpace.setDirty(true);
 			projectSpace.commit(
 				createLogMessage(usersession.getUsername(), "Commiting " + recordedBodyCount + " new body frames."),
 				null, new NullProgressMonitor());

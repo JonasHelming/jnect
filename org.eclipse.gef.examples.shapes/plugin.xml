@@ -40,9 +40,9 @@
    <extension
          point="org.eclipse.ui.menus">
       <menuContribution
-            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=org.jnect.demo.gef">
+            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
          <toolbar
-               id="org.jnect.demo.gef.shapes">
+               id="org.eclipse.gef.examples.shapes">
             <command
                   commandId="org.eclipse.gef.examples.shapes.start"
                   label="Start Shapes Editing"

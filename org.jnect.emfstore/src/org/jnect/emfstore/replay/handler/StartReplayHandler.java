@@ -12,8 +12,8 @@ public class StartReplayHandler extends AbstractHandler {
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		Replay replay = Replay.getInstance();
 		replay.setupBody();
-		replay.displaySlider();
 		KinectBodyPresentationManager.showReplayBody();
+		replay.displaySlider(); // blocking operation!
 		return null;
 	}
 }

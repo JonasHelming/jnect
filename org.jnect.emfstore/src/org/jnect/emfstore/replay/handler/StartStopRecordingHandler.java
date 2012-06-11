@@ -17,7 +17,7 @@ public class StartStopRecordingHandler extends AbstractHandler {
 			// show the tracked skeleton if record start is requested and not yet tracked
 			KinectManager.INSTANCE.startSkeletonTracking();
 		}
-		KinectBodyPresentationManager.showLiveBody();
+		KinectBodyPresentationManager.showRecordingBody();
 		return null;
 	}
 

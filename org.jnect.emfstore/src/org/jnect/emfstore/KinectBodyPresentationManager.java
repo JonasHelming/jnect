@@ -9,12 +9,10 @@ import org.jnect.emfstore.replay.Replay;
 public class KinectBodyPresentationManager {
 	public static void showReplayBody() {
 		Replay replay = Replay.getInstance();
-		replay.setupBody();
-		replay.displaySlider();
 		setBody(replay.getReplayBody());
 	}
 
-	public static void showLiveBody() {
+	public static void showRecordingBody() {
 		setBody(KinectManager.INSTANCE.getSkeletonModel());
 	}
 

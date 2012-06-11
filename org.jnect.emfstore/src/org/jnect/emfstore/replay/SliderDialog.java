@@ -20,6 +20,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Slider;
 import org.jnect.emfstore.EMFStorage;
+import org.jnect.emfstore.KinectBodyPresentationManager;
 
 public class SliderDialog extends Dialog implements Observer {
 
@@ -44,7 +45,7 @@ public class SliderDialog extends Dialog implements Observer {
 			@Override
 			public void handleEvent(Event event) {
 				replayBodyProvider.stopReplay();
-
+				KinectBodyPresentationManager.showRecordingBody();
 			}
 		});
 		this.replayBodyProvider = rbp;

@@ -31,7 +31,7 @@ public class ReplayBodyProvider implements IReplayBodyProvider {
 	@Override
 	public void stopReplay() {
 		EMFStorage.getInstance().stopReplay();
-		KinectBodyPresentationManager.showLiveBody();
+		KinectBodyPresentationManager.showRecordingBody();
 	}
 
 }

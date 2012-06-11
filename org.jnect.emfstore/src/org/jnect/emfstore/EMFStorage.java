@@ -438,14 +438,6 @@ public class EMFStorage extends Observable implements ICommitter {
 		try {
 			// projectSpace.setDirty(true);
 			// ((ProjectSpaceBase) projectSpace).save();
-			if (compOpHandle != null) {
-				try {
-					compOpHandle.abort();
-					compOpHandle = null;
-				} catch (InvalidHandleException e) {
-					e.printStackTrace();
-				}
-			}
 			projectSpace.commit(
 				createLogMessage(usersession.getUsername(), "Commiting " + recordedBodyCount + " new body frames."),
 				null, new NullProgressMonitor());
@@ -459,13 +451,6 @@ public class EMFStorage extends Observable implements ICommitter {
 	@Override
 	public void commit() {
 		commitBodyChanges();
-	}
-
-	/**
-	 * @return The number of body changes squashed into one commit.
-	 */
-	public int getCommitResolution() {
-		return 20;
 	}
 
 	private class CommitVersionAndOffset {
@@ -540,6 +525,7 @@ public class EMFStorage extends Observable implements ICommitter {
 	protected void syncBodies(Body outwardBody, Body emfBody) {
 		EList<EObject> bodyContents = outwardBody.eContents();
 		EList<EObject> recBodyContents = emfBody.eContents();
+		assert BODY_ELEMENTS_COUNT == bodyContents.size() && BODY_ELEMENTS_COUNT == recBodyContents.size() : "Unexpected amount of body elements. The being is not human ;-)";
 		for (int i = 0; i < BODY_ELEMENTS_COUNT; i++) {
 			PositionedElement outwardBodyEl = (PositionedElement) bodyContents.get(i);
 			PositionedElement recBodyEl = (PositionedElement) recBodyContents.get(i);

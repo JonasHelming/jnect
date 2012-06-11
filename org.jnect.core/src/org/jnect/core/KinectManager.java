@@ -98,11 +98,4 @@ public interface KinectManager {
 	 * @return true if speech recognition is running, false otherwise
 	 */
 	boolean isSpeechRecognitionStarted();
-
-	/**
-	 * Toggles the state recording state of the Kinect Manager.
-	 * 
-	 * @return true if recording was successfully switched on, false if it was turned off or could not be turned on
-	 */
-	boolean switchRecording();
 }

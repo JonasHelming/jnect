@@ -11,7 +11,7 @@ public class RecordingBodyProvider implements IBodyProvider {
 	Body nonRecordingBody;
 
 	@Override
-	public Body getRecordingBody() {
+	public Body getBody() {
 		return EMFStorage.getInstance().getRecordingBody();
 	}
 
@@ -32,16 +32,13 @@ public class RecordingBodyProvider implements IBodyProvider {
 	}
 
 	@Override
-	public Body getNonRecordingBody() {
-		if (nonRecordingBody == null) {
-			nonRecordingBody = EMFStorage.createAndFillBody();
-		}
-		return nonRecordingBody;
+	public void startStopRecoring(boolean on) {
+		EMFStorage.getInstance().startStopRecording(on);
 	}
 
 	@Override
-	public boolean canRecord() {
-		return true;
+	public boolean isRecording() {
+		return EMFStorage.getInstance().isRecording();
 	}
 
 }

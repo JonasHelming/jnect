@@ -48,15 +48,12 @@ public class KinectManagerImpl implements KinectManager, KinectDataHandler {
 
 	private IBodyProvider bodyProvider;
 
-	private boolean isRecording;
-
 	public KinectManagerImpl() {
 		// this.connectionManager = new SocketConnectionManager();
 		this.connectionManager = new ProxyConnectionManager();
 		this.connectionManager.setDataHandler(this);
 		setUpBodyProvider();
-		body = bodyProvider.getNonRecordingBody();
-		isRecording = false;
+		body = bodyProvider.getBody();
 		// body=BodymodelFactory.eINSTANCE.createBody();
 		// fillBody();
 		this.skeletonParser = new SkeletonParser(body);
@@ -196,27 +193,4 @@ public class KinectManagerImpl implements KinectManager, KinectDataHandler {
 		return this.connectionManager.isSpeechRecognitionStarted();
 	}
 
-	@Override
-	public boolean switchRecording() {
-		boolean switched;
-		boolean retVal;
-
-		if (!isRecording && bodyProvider.canRecord()) {
-			this.body = bodyProvider.getRecordingBody();
-			switched = true;
-			retVal = true;
-		} else if (isRecording) {
-			this.body = bodyProvider.getNonRecordingBody();
-			switched = true;
-			retVal = false;
-		} else {
-			retVal = false;
-			switched = false;
-		}
-
-		if (switched)
-			skeletonParser = new SkeletonParser(body);
-
-		return retVal;
-	}
 }

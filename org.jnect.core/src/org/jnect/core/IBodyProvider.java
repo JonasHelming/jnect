@@ -3,16 +3,8 @@ package org.jnect.core;
 import org.jnect.bodymodel.Body;
 
 public interface IBodyProvider {
-	/**
-	 * @return A body that is somehow made persistent. Returns <code>null</code> if the body provider does not provide
-	 *         recording functionality. See also: {@link #canRecord()}.
-	 */
-	public Body getRecordingBody();
 
-	/**
-	 * @return A non persistent body. This never returns null.
-	 */
-	public Body getNonRecordingBody();
+	public Body getBody();
 
 	/**
 	 * Saves any recorded data if the body provider supports recording.
@@ -20,7 +12,14 @@ public interface IBodyProvider {
 	public void save();
 
 	/**
-	 * @return
+	 * Toggles the recording state.
+	 * 
+	 * @param on if true, recording is activated. It is deactivated otherwise.
 	 */
-	public boolean canRecord();
+	public void startStopRecoring(boolean on);
+
+	/**
+	 * @return true if the body is currently recorded, false otherwise
+	 */
+	public boolean isRecording();
 }

@@ -30,22 +30,17 @@ public class BodyProviderDefaultImpl implements IBodyProvider {
 	Body body = createAndFillBody();
 
 	@Override
-	public Body getRecordingBody() {
+	public Body getBody() {
 		return body;
 	}
 
 	@Override
-	public Body getNonRecordingBody() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public void save() {
+		// not implemented by default impl
 	}
 
 	@Override
-	public boolean canRecord() {
+	public boolean isRecording() {
 		return false;
 	}
 
@@ -136,5 +131,10 @@ public class BodyProviderDefaultImpl implements IBodyProvider {
 		target.getIncomingLinks().add(link);
 
 		body.getLinks().add(link);
+	}
+
+	@Override
+	public void startStopRecoring(boolean on) {
+		// do nothing, as the default impl does not record
 	}
 }

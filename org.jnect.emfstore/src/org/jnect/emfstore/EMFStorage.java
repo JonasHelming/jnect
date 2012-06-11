@@ -8,6 +8,7 @@ import java.util.Observable;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.emf.common.notify.Notification;
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EContentAdapter;
 import org.eclipse.emf.emfstore.client.model.CompositeOperationHandle;
@@ -71,6 +72,8 @@ public class EMFStorage extends Observable implements ICommitter {
 
 	private Body replayBody;
 	private Body recordingBody;
+	private Body outwardRecordingBody;
+
 	private List<ChangePackage> changePackages;
 	private boolean changePackagesUpdateNeeded;
 	private int replayStatesCount = 0;
@@ -83,6 +86,8 @@ public class EMFStorage extends Observable implements ICommitter {
 	private int recordedBodyCount = 0;
 
 	private CompositeOperationHandle compOpHandle;
+
+	private boolean isRecording = false;
 
 	/**
 	 * @return The singleton EMFStorage object. Tries to setup the connection to the EMFStore Server.
@@ -98,11 +103,11 @@ public class EMFStorage extends Observable implements ICommitter {
 		this.changePackagesUpdateNeeded = true;
 		connectToEMFStoreAndInit();
 		BODY_ELEMENTS_COUNT = recordingBody.eContents().size();
-		recordingBody.eAdapters().add(new CommitBodyChangesAdapter());
-		compOpHandle = projectSpace.beginCompositeOperation();
 		// 3 changes (x, y, z) in every body element
 		NEEDED_CHANGES = BODY_ELEMENTS_COUNT * 3;
 		replayBody = createAndFillBody();
+		outwardRecordingBody = createAndFillBody();
+		outwardRecordingBody.eAdapters().add(new BundleBodyChangesAdapter());
 	}
 
 	private void connectToEMFStoreAndInit() {
@@ -283,7 +288,7 @@ public class EMFStorage extends Observable implements ICommitter {
 	}
 
 	public Body getRecordingBody() {
-		return recordingBody;
+		return outwardRecordingBody;
 	}
 
 	public Body getReplayingBody() {
@@ -338,7 +343,7 @@ public class EMFStorage extends Observable implements ICommitter {
 		List<AbstractOperation> leafOperations = operations.get(bodyOffset).getLeafOperations();
 
 		for (AbstractOperation o : leafOperations) {
-			replayElement(o);
+			replayElement(replayBody, o);
 		}
 
 	}
@@ -356,7 +361,7 @@ public class EMFStorage extends Observable implements ICommitter {
 		return new CommitVersionAndOffset(changePackages.size() - 1, 0);
 	}
 
-	private void replayElement(AbstractOperation o) {
+	private void replayElement(Body targetBody, AbstractOperation o) {
 		if (o instanceof AttributeOperation) {
 			AttributeOperation ao = (AttributeOperation) o;
 			ModelElementId id = ao.getModelElementId();
@@ -365,45 +370,45 @@ public class EMFStorage extends Observable implements ICommitter {
 			String attribute = ao.getFeatureName(); // gets attribute name
 
 			if (element instanceof Head) {
-				setValue(attribute, replayBody.getHead(), newValue);
+				setValue(attribute, targetBody.getHead(), newValue);
 			} else if (element instanceof CenterShoulder) {
-				setValue(attribute, replayBody.getCenterShoulder(), newValue);
+				setValue(attribute, targetBody.getCenterShoulder(), newValue);
 			} else if (element instanceof LeftShoulder) {
-				setValue(attribute, replayBody.getLeftShoulder(), newValue);
+				setValue(attribute, targetBody.getLeftShoulder(), newValue);
 			} else if (element instanceof RightShoulder) {
-				setValue(attribute, replayBody.getRightShoulder(), newValue);
+				setValue(attribute, targetBody.getRightShoulder(), newValue);
 			} else if (element instanceof LeftElbow) {
-				setValue(attribute, replayBody.getLeftElbow(), newValue);
+				setValue(attribute, targetBody.getLeftElbow(), newValue);
 			} else if (element instanceof RightElbow) {
-				setValue(attribute, replayBody.getRightElbow(), newValue);
+				setValue(attribute, targetBody.getRightElbow(), newValue);
 			} else if (element instanceof LeftWrist) {
-				setValue(attribute, replayBody.getLeftWrist(), newValue);
+				setValue(attribute, targetBody.getLeftWrist(), newValue);
 			} else if (element instanceof RightWrist) {
-				setValue(attribute, replayBody.getRightWrist(), newValue);
+				setValue(attribute, targetBody.getRightWrist(), newValue);
 			} else if (element instanceof LeftHand) {
-				setValue(attribute, replayBody.getLeftHand(), newValue);
+				setValue(attribute, targetBody.getLeftHand(), newValue);
 			} else if (element instanceof RightHand) {
-				setValue(attribute, replayBody.getRightHand(), newValue);
+				setValue(attribute, targetBody.getRightHand(), newValue);
 			} else if (element instanceof Spine) {
-				setValue(attribute, replayBody.getSpine(), newValue);
+				setValue(attribute, targetBody.getSpine(), newValue);
 			} else if (element instanceof CenterHip) {
-				setValue(attribute, replayBody.getCenterHip(), newValue);
+				setValue(attribute, targetBody.getCenterHip(), newValue);
 			} else if (element instanceof LeftHip) {
-				setValue(attribute, replayBody.getLeftHip(), newValue);
+				setValue(attribute, targetBody.getLeftHip(), newValue);
 			} else if (element instanceof RightHip) {
-				setValue(attribute, replayBody.getRightHip(), newValue);
+				setValue(attribute, targetBody.getRightHip(), newValue);
 			} else if (element instanceof LeftKnee) {
-				setValue(attribute, replayBody.getLeftKnee(), newValue);
+				setValue(attribute, targetBody.getLeftKnee(), newValue);
 			} else if (element instanceof RightKnee) {
-				setValue(attribute, replayBody.getRightKnee(), newValue);
+				setValue(attribute, targetBody.getRightKnee(), newValue);
 			} else if (element instanceof LeftAnkle) {
-				setValue(attribute, replayBody.getLeftAnkle(), newValue);
+				setValue(attribute, targetBody.getLeftAnkle(), newValue);
 			} else if (element instanceof RightAnkle) {
-				setValue(attribute, replayBody.getRightAnkle(), newValue);
+				setValue(attribute, targetBody.getRightAnkle(), newValue);
 			} else if (element instanceof LeftFoot) {
-				setValue(attribute, replayBody.getLeftFoot(), newValue);
+				setValue(attribute, targetBody.getLeftFoot(), newValue);
 			} else if (element instanceof RightFoot) {
-				setValue(attribute, replayBody.getRightFoot(), newValue);
+				setValue(attribute, targetBody.getRightFoot(), newValue);
 			}
 		}
 	}
@@ -436,6 +441,7 @@ public class EMFStorage extends Observable implements ICommitter {
 			if (compOpHandle != null) {
 				try {
 					compOpHandle.abort();
+					compOpHandle = null;
 				} catch (InvalidHandleException e) {
 					e.printStackTrace();
 				}
@@ -445,7 +451,6 @@ public class EMFStorage extends Observable implements ICommitter {
 				null, new NullProgressMonitor());
 			changePackagesUpdateNeeded = true;
 			recordedBodyCount = 0;
-			compOpHandle = projectSpace.beginCompositeOperation();
 		} catch (EmfStoreException e) {
 			e.printStackTrace();
 		}
@@ -471,6 +476,10 @@ public class EMFStorage extends Observable implements ICommitter {
 			this.version = version;
 			this.offset = offset;
 		}
+	}
+
+	public void startStopRecording(boolean on) {
+		isRecording = on;
 	}
 
 	private class ReplayRunnable implements Runnable {
@@ -528,31 +537,53 @@ public class EMFStorage extends Observable implements ICommitter {
 		}
 	}
 
+	protected void syncBodies(Body outwardBody, Body emfBody) {
+		EList<EObject> bodyContents = outwardBody.eContents();
+		EList<EObject> recBodyContents = emfBody.eContents();
+		for (int i = 0; i < BODY_ELEMENTS_COUNT; i++) {
+			PositionedElement outwardBodyEl = (PositionedElement) bodyContents.get(i);
+			PositionedElement recBodyEl = (PositionedElement) recBodyContents.get(i);
+
+			recBodyEl.setX(outwardBodyEl.getX());
+			recBodyEl.setY(outwardBodyEl.getY());
+			recBodyEl.setZ(outwardBodyEl.getZ());
+		}
+	}
+
 	public void stopReplay() {
 		if (replayRunnable != null)
 			replayRunnable.stop();
 	}
 
-	private class CommitBodyChangesAdapter extends EContentAdapter {
+	private class BundleBodyChangesAdapter extends EContentAdapter {
 		private int currChanges = 0;
 
 		@Override
 		public void notifyChanged(Notification notification) {
 			super.notifyChanged(notification);
+
 			if (++currChanges == NEEDED_CHANGES) {
 				currChanges = 0;
-				try {
-					compOpHandle.end("New Body frame", "Added new frame to store", projectSpace.getProject()
-						.getModelElementId(recordingBody));
-					projectSpace.setDirty(true);
-					recordedBodyCount++;
-				} catch (InvalidHandleException e) {
-					e.printStackTrace();
+				if (isRecording) {
+					try {
+						compOpHandle = projectSpace.beginCompositeOperation();
+						syncBodies(outwardRecordingBody, recordingBody);
+
+						compOpHandle.end("New Body frame", "Added new frame to store", projectSpace.getProject()
+							.getModelElementId(recordingBody));
+						projectSpace.setDirty(true);
+						recordedBodyCount++;
+					} catch (InvalidHandleException e) {
+						e.printStackTrace();
+					}
 				}
-				compOpHandle = projectSpace.beginCompositeOperation();
 			}
 
 		}
+	}
+
+	public boolean isRecording() {
+		return isRecording;
 	}
 
 }

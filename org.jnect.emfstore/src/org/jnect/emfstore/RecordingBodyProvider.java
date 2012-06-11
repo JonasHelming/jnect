@@ -1,38 +1,24 @@
 package org.jnect.emfstore;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.jnect.bodymodel.Body;
 import org.jnect.core.IBodyProvider;
 
 public class RecordingBodyProvider implements IBodyProvider {
-	BodyBuffer buffer;
-
-	public RecordingBodyProvider() {
-		buffer = new BodyBuffer();
-	}
+	Body nonRecordingBody;
 
 	@Override
 	public Body getBody() {
-		return buffer.getBufferBody();
+		return EMFStorage.getInstance().getRecordingBody();
 	}
 
 	@Override
-	public void save() {
-		final EMFStorage store = EMFStorage.getInstance();
-		Job commitJob = new Job("Saving recorded data.") {
+	public void startStopRecoring(boolean on) {
+		EMFStorage.getInstance().startStopRecording(on);
+	}
 
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				buffer.flushToBody(store.getRecordingBody(), store, store.getCommitResolution(), monitor);
-				monitor.done();
-				return Status.OK_STATUS;
-			}
-		};
-		commitJob.setUser(true); // show dialog
-		commitJob.schedule();
+	@Override
+	public boolean isRecording() {
+		return EMFStorage.getInstance().isRecording();
 	}
 
 }

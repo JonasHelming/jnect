@@ -6,13 +6,22 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Observable;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.emf.common.notify.Notification;
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.util.EContentAdapter;
+import org.eclipse.emf.emfstore.client.model.CompositeOperationHandle;
 import org.eclipse.emf.emfstore.client.model.ModelFactory;
 import org.eclipse.emf.emfstore.client.model.ProjectSpace;
 import org.eclipse.emf.emfstore.client.model.Usersession;
 import org.eclipse.emf.emfstore.client.model.Workspace;
 import org.eclipse.emf.emfstore.client.model.WorkspaceManager;
+import org.eclipse.emf.emfstore.client.model.exceptions.InvalidHandleException;
 import org.eclipse.emf.emfstore.client.model.impl.WorkspaceImpl;
 import org.eclipse.emf.emfstore.client.model.util.EMFStoreClientUtil;
 import org.eclipse.emf.emfstore.client.model.util.EMFStoreCommand;
@@ -52,23 +61,41 @@ import org.jnect.bodymodel.RightShoulder;
 import org.jnect.bodymodel.RightWrist;
 import org.jnect.bodymodel.Spine;
 
+/**
+ * @author aleaum
+ *         This class offers the backbone for recording changing body models e.g. for storing Kinect data.
+ */
 public class EMFStorage extends Observable implements ICommitter {
 
 	private static EMFStorage INSTANCE;
 	private static String PROJECT_NAME = "jnectEMFStorage";
+	private int NEEDED_CHANGES;
 
 	ProjectSpace projectSpace;
 	Usersession usersession;
 
 	private Body replayBody;
 	private Body recordingBody;
+	private Body outwardRecordingBody;
+
 	private List<ChangePackage> changePackages;
 	private boolean changePackagesUpdateNeeded;
 	private int replayStatesCount = 0;
 	private final int BODY_ELEMENTS_COUNT;
-	private final int OPS_PER_BODY;
 	private ReplayRunnable replayRunnable;
 
+	/**
+	 * Counts how many new bodies have been recorded since the last commit.
+	 */
+	private int recordedBodyCount = 0;
+
+	private CompositeOperationHandle compOpHandle;
+
+	private boolean isRecording = false;
+
+	/**
+	 * @return The singleton EMFStorage object. Tries to setup the connection to the EMFStore Server.
+	 */
 	public static EMFStorage getInstance() {
 		if (INSTANCE == null) {
 			INSTANCE = new EMFStorage();
@@ -80,7 +107,11 @@ public class EMFStorage extends Observable implements ICommitter {
 		this.changePackagesUpdateNeeded = true;
 		connectToEMFStoreAndInit();
 		BODY_ELEMENTS_COUNT = recordingBody.eContents().size();
-		OPS_PER_BODY = BODY_ELEMENTS_COUNT * 3;
+		// 3 changes (x, y, z) in every body element
+		NEEDED_CHANGES = BODY_ELEMENTS_COUNT * 3;
+		replayBody = createAndFillBody();
+		outwardRecordingBody = createAndFillBody();
+		outwardRecordingBody.eAdapters().add(new BundleBodyChangesAdapter());
 	}
 
 	private void connectToEMFStoreAndInit() {
@@ -148,6 +179,9 @@ public class EMFStorage extends Observable implements ICommitter {
 					}
 					projectSpace.commit(createLogMessage(usersession.getUsername(), "commit initial body"), null,
 						new NullProgressMonitor());
+
+					org.eclipse.emf.emfstore.client.model.Configuration.setAutoSave(false);
+
 				} catch (AccessControlException e) {
 					ModelUtil.logException(e);
 				} catch (EmfStoreException e) {
@@ -258,13 +292,10 @@ public class EMFStorage extends Observable implements ICommitter {
 	}
 
 	public Body getRecordingBody() {
-		return recordingBody;
+		return outwardRecordingBody;
 	}
 
 	public Body getReplayingBody() {
-		if (replayBody == null)
-			replayBody = createAndFillBody();
-
 		return replayBody;
 	}
 
@@ -281,9 +312,7 @@ public class EMFStorage extends Observable implements ICommitter {
 				changePackagesUpdateNeeded = false;
 				replayStatesCount = 0;
 				for (ChangePackage cp : changePackages) {
-					assert cp.getLeafOperations().size() % (OPS_PER_BODY) == 0 : "Operation size should be multitude of "
-						+ OPS_PER_BODY + " but was: " + cp.getLeafOperations().size();
-					replayStatesCount += cp.getLeafOperations().size() / OPS_PER_BODY;
+					replayStatesCount += cp.getOperations().size();
 				}
 			} catch (EmfStoreException e) {
 				e.printStackTrace();
@@ -311,13 +340,14 @@ public class EMFStorage extends Observable implements ICommitter {
 	}
 
 	protected void replayOneChange(List<AbstractOperation> operations, int bodyOffset) {
-		int startPos = bodyOffset * OPS_PER_BODY;
-		assert operations.size() >= startPos + OPS_PER_BODY - 1 : "Should be dividable by " + OPS_PER_BODY
-			+ " but was " + operations.size();
+		int startPos = bodyOffset;
+		assert operations.size() >= startPos - 1 : "Operations should contain the requested body index " + startPos
+			+ " but had size " + operations.size() + ".";
 
-		for (int i = startPos; i < startPos + OPS_PER_BODY; i++) {
-			AbstractOperation o = operations.get(i);
-			replayElement(o);
+		List<AbstractOperation> leafOperations = operations.get(bodyOffset).getLeafOperations();
+
+		for (AbstractOperation o : leafOperations) {
+			replayElement(replayBody, o);
 		}
 
 	}
@@ -326,7 +356,7 @@ public class EMFStorage extends Observable implements ICommitter {
 		int countedBodies = 0;
 		for (int i = 0; i < changePackages.size(); i++) {
 			ChangePackage cp = changePackages.get(i);
-			int currentCount = cp.getLeafOperations().size() / 3 / BODY_ELEMENTS_COUNT;
+			int currentCount = cp.getOperations().size();
 			if (countedBodies + currentCount > repVersion)
 				return new CommitVersionAndOffset(i, repVersion - countedBodies);
 			countedBodies += currentCount;
@@ -335,7 +365,7 @@ public class EMFStorage extends Observable implements ICommitter {
 		return new CommitVersionAndOffset(changePackages.size() - 1, 0);
 	}
 
-	private void replayElement(AbstractOperation o) {
+	private void replayElement(Body targetBody, AbstractOperation o) {
 		if (o instanceof AttributeOperation) {
 			AttributeOperation ao = (AttributeOperation) o;
 			ModelElementId id = ao.getModelElementId();
@@ -344,45 +374,45 @@ public class EMFStorage extends Observable implements ICommitter {
 			String attribute = ao.getFeatureName(); // gets attribute name
 
 			if (element instanceof Head) {
-				setValue(attribute, replayBody.getHead(), newValue);
+				setValue(attribute, targetBody.getHead(), newValue);
 			} else if (element instanceof CenterShoulder) {
-				setValue(attribute, replayBody.getCenterShoulder(), newValue);
+				setValue(attribute, targetBody.getCenterShoulder(), newValue);
 			} else if (element instanceof LeftShoulder) {
-				setValue(attribute, replayBody.getLeftShoulder(), newValue);
+				setValue(attribute, targetBody.getLeftShoulder(), newValue);
 			} else if (element instanceof RightShoulder) {
-				setValue(attribute, replayBody.getRightShoulder(), newValue);
+				setValue(attribute, targetBody.getRightShoulder(), newValue);
 			} else if (element instanceof LeftElbow) {
-				setValue(attribute, replayBody.getLeftElbow(), newValue);
+				setValue(attribute, targetBody.getLeftElbow(), newValue);
 			} else if (element instanceof RightElbow) {
-				setValue(attribute, replayBody.getRightElbow(), newValue);
+				setValue(attribute, targetBody.getRightElbow(), newValue);
 			} else if (element instanceof LeftWrist) {
-				setValue(attribute, replayBody.getLeftWrist(), newValue);
+				setValue(attribute, targetBody.getLeftWrist(), newValue);
 			} else if (element instanceof RightWrist) {
-				setValue(attribute, replayBody.getRightWrist(), newValue);
+				setValue(attribute, targetBody.getRightWrist(), newValue);
 			} else if (element instanceof LeftHand) {
-				setValue(attribute, replayBody.getLeftHand(), newValue);
+				setValue(attribute, targetBody.getLeftHand(), newValue);
 			} else if (element instanceof RightHand) {
-				setValue(attribute, replayBody.getRightHand(), newValue);
+				setValue(attribute, targetBody.getRightHand(), newValue);
 			} else if (element instanceof Spine) {
-				setValue(attribute, replayBody.getSpine(), newValue);
+				setValue(attribute, targetBody.getSpine(), newValue);
 			} else if (element instanceof CenterHip) {
-				setValue(attribute, replayBody.getCenterHip(), newValue);
+				setValue(attribute, targetBody.getCenterHip(), newValue);
 			} else if (element instanceof LeftHip) {
-				setValue(attribute, replayBody.getLeftHip(), newValue);
+				setValue(attribute, targetBody.getLeftHip(), newValue);
 			} else if (element instanceof RightHip) {
-				setValue(attribute, replayBody.getRightHip(), newValue);
+				setValue(attribute, targetBody.getRightHip(), newValue);
 			} else if (element instanceof LeftKnee) {
-				setValue(attribute, replayBody.getLeftKnee(), newValue);
+				setValue(attribute, targetBody.getLeftKnee(), newValue);
 			} else if (element instanceof RightKnee) {
-				setValue(attribute, replayBody.getRightKnee(), newValue);
+				setValue(attribute, targetBody.getRightKnee(), newValue);
 			} else if (element instanceof LeftAnkle) {
-				setValue(attribute, replayBody.getLeftAnkle(), newValue);
+				setValue(attribute, targetBody.getLeftAnkle(), newValue);
 			} else if (element instanceof RightAnkle) {
-				setValue(attribute, replayBody.getRightAnkle(), newValue);
+				setValue(attribute, targetBody.getRightAnkle(), newValue);
 			} else if (element instanceof LeftFoot) {
-				setValue(attribute, replayBody.getLeftFoot(), newValue);
+				setValue(attribute, targetBody.getLeftFoot(), newValue);
 			} else if (element instanceof RightFoot) {
-				setValue(attribute, replayBody.getRightFoot(), newValue);
+				setValue(attribute, targetBody.getRightFoot(), newValue);
 			}
 		}
 	}
@@ -403,16 +433,20 @@ public class EMFStorage extends Observable implements ICommitter {
 			CommitVersionAndOffset versAndOff = getCommitVersionForReplayVersion(state);
 			ChangePackage cp = changePackages.get(versAndOff.version);
 			// replay the desired state to show the correct shape
-			replayOneChange(cp.getLeafOperations(), versAndOff.offset);
+			replayOneChange(cp.getOperations(), versAndOff.offset);
 		}
 	}
 
-	private void commitBodyChanges() {
+	private void commitBodyChanges(IProgressMonitor monitor) {
 		// commit the pending changes of the project to the EMF Store
 		try {
-			projectSpace.commit(createLogMessage(usersession.getUsername(), "commit new state"), null,
-				new NullProgressMonitor());
+			// projectSpace.setDirty(true);
+			// ((ProjectSpaceBase) projectSpace).save();
+			projectSpace.commit(
+				createLogMessage(usersession.getUsername(), "Commiting " + recordedBodyCount + " new body frames."),
+				null, monitor);
 			changePackagesUpdateNeeded = true;
+			recordedBodyCount = 0;
 		} catch (EmfStoreException e) {
 			e.printStackTrace();
 		}
@@ -420,14 +454,16 @@ public class EMFStorage extends Observable implements ICommitter {
 
 	@Override
 	public void commit() {
-		commitBodyChanges();
-	}
+		Job commitJob = new Job("Saving recorded data.") {
 
-	/**
-	 * @return The number of body changes squashed into one commit.
-	 */
-	public int getCommitResolution() {
-		return 20;
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				commitBodyChanges(monitor);
+				return Status.OK_STATUS;
+			}
+		};
+		commitJob.setUser(true); // show dialog
+		commitJob.schedule();
 	}
 
 	private class CommitVersionAndOffset {
@@ -438,6 +474,10 @@ public class EMFStorage extends Observable implements ICommitter {
 			this.version = version;
 			this.offset = offset;
 		}
+	}
+
+	public void startStopRecording(boolean on) {
+		isRecording = on;
 	}
 
 	private class ReplayRunnable implements Runnable {
@@ -468,16 +508,16 @@ public class EMFStorage extends Observable implements ICommitter {
 		@Override
 		public void run() {
 			stop = false;
-			List<AbstractOperation> operations;
+			List<AbstractOperation> compositeBodyOps;
 
 			int currentVersion = replayFromBodyNr;
 			int innerOffset = replayFrom.offset;
 
 			for (int i = replayFrom.version; i < changePackages.size() && !isStopped(); i++) {
 				ChangePackage cp = changePackages.get(i);
-				operations = cp.getLeafOperations();
-				for (int j = innerOffset; j < operations.size() / OPS_PER_BODY && !isStopped(); j++) {
-					replayOneChange(operations, j);
+				compositeBodyOps = cp.getOperations();
+				for (int j = innerOffset; j < compositeBodyOps.size() && !isStopped(); j++) {
+					replayOneChange(compositeBodyOps, j);
 					currentVersion++;
 					setChanged();
 					notifyObservers(currentVersion);
@@ -495,9 +535,54 @@ public class EMFStorage extends Observable implements ICommitter {
 		}
 	}
 
+	protected void syncBodies(Body outwardBody, Body emfBody) {
+		EList<EObject> bodyContents = outwardBody.eContents();
+		EList<EObject> recBodyContents = emfBody.eContents();
+		assert BODY_ELEMENTS_COUNT == bodyContents.size() && BODY_ELEMENTS_COUNT == recBodyContents.size() : "Unexpected amount of body elements. The being is not human ;-)";
+		for (int i = 0; i < BODY_ELEMENTS_COUNT; i++) {
+			PositionedElement outwardBodyEl = (PositionedElement) bodyContents.get(i);
+			PositionedElement recBodyEl = (PositionedElement) recBodyContents.get(i);
+
+			recBodyEl.setX(outwardBodyEl.getX());
+			recBodyEl.setY(outwardBodyEl.getY());
+			recBodyEl.setZ(outwardBodyEl.getZ());
+		}
+	}
+
 	public void stopReplay() {
 		if (replayRunnable != null)
 			replayRunnable.stop();
+	}
+
+	private class BundleBodyChangesAdapter extends EContentAdapter {
+		private int currChanges = 0;
+
+		@Override
+		public void notifyChanged(Notification notification) {
+			super.notifyChanged(notification);
+
+			if (++currChanges == NEEDED_CHANGES) {
+				currChanges = 0;
+				if (isRecording) {
+					try {
+						compOpHandle = projectSpace.beginCompositeOperation();
+						syncBodies(outwardRecordingBody, recordingBody);
+
+						compOpHandle.end("New Body frame", "Added new frame to store", projectSpace.getProject()
+							.getModelElementId(recordingBody));
+						projectSpace.setDirty(true);
+						recordedBodyCount++;
+					} catch (InvalidHandleException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+
+		}
+	}
+
+	public boolean isRecording() {
+		return isRecording;
 	}
 
 }

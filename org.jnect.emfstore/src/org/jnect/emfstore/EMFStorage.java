@@ -6,7 +6,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Observable;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
@@ -433,14 +437,14 @@ public class EMFStorage extends Observable implements ICommitter {
 		}
 	}
 
-	private void commitBodyChanges() {
+	private void commitBodyChanges(IProgressMonitor monitor) {
 		// commit the pending changes of the project to the EMF Store
 		try {
 			// projectSpace.setDirty(true);
 			// ((ProjectSpaceBase) projectSpace).save();
 			projectSpace.commit(
 				createLogMessage(usersession.getUsername(), "Commiting " + recordedBodyCount + " new body frames."),
-				null, new NullProgressMonitor());
+				null, monitor);
 			changePackagesUpdateNeeded = true;
 			recordedBodyCount = 0;
 		} catch (EmfStoreException e) {
@@ -450,7 +454,16 @@ public class EMFStorage extends Observable implements ICommitter {
 
 	@Override
 	public void commit() {
-		commitBodyChanges();
+		Job commitJob = new Job("Saving recorded data.") {
+
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				commitBodyChanges(monitor);
+				return Status.OK_STATUS;
+			}
+		};
+		commitJob.setUser(true); // show dialog
+		commitJob.schedule();
 	}
 
 	private class CommitVersionAndOffset {

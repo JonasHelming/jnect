@@ -7,11 +7,6 @@ public interface IBodyProvider {
 	public Body getBody();
 
 	/**
-	 * Saves any recorded data if the body provider supports recording.
-	 */
-	public void save();
-
-	/**
 	 * Toggles the recording state.
 	 * 
 	 * @param on if true, recording is activated. It is deactivated otherwise.

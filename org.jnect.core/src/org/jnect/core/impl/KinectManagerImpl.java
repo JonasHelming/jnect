@@ -109,9 +109,6 @@ public class KinectManagerImpl implements KinectManager, KinectDataHandler {
 	@Override
 	public void stopSkeletonTracking() {
 		this.connectionManager.stopSkeletonTracking();
-		if (bodyProvider != null) {
-			bodyProvider.save();
-		}
 	}
 
 	@Override

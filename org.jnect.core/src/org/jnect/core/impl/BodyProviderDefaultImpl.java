@@ -35,11 +35,6 @@ public class BodyProviderDefaultImpl implements IBodyProvider {
 	}
 
 	@Override
-	public void save() {
-		// not implemented by default impl
-	}
-
-	@Override
 	public boolean isRecording() {
 		return false;
 	}

@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/org.jnect.api.feature_0.1.3.jar" id="org.jnect.api.feature" version="0.1.3">
+   <feature url="features/org.jnect.api.feature_0.2.0.jar" id="org.jnect.api.feature" version="0.2.0">
       <category name="org.jnect.api"/>
    </feature>
-   <feature url="features/org.jnect.demo.feature_0.1.3.jar" id="org.jnect.demo.feature" version="0.1.3">
+   <feature url="features/org.jnect.demo.feature_0.2.0.jar" id="org.jnect.demo.feature" version="0.2.0">
+      <category name="org.jnect.demo"/>
+   </feature>
+   <feature url="features/org.jnect.emfstore.feature_0.2.0.jar" id="org.jnect.emfstore.feature" version="0.2.0">
+      <category name="org.jnect.demo"/>
+   </feature>
+   <feature url="features/org.jnect.demo.speechctrl.feature_0.2.0.jar" id="org.jnect.demo.speechctrl.feature" version="0.2.0">
+      <category name="org.jnect.demo"/>
+   </feature>
+   <feature url="features/org.jnect.demo.gef.editing.feature_0.2.0.jar" id="org.jnect.demo.gef.editing.feature" version="0.2.0">
       <category name="org.jnect.demo"/>
    </feature>
    <category-def name="org.jnect.api" label="org.jnect.api"/>

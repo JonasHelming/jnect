@@ -2,7 +2,7 @@
 <feature
       id="org.jnect.api.feature"
       label="Jnect API Feature"
-      version="0.1.3"
+      version="0.2.0"
       provider-name="jnect.org">
 
    <description url="http://www.example.com/description">
@@ -87,6 +87,10 @@ This Agreement is governed by the laws of the State of New York and the intellec
    </license>
 
    <requires>
+      <import plugin="org.eclipse.core.runtime" version="3.7.0" match="greaterOrEqual"/>
+      <import feature="org.eclipse.emf.ecore" version="2.7.0" match="compatible"/>
+      <import plugin="org.eclipse.emf.ecore" version="2.7.0" match="greaterOrEqual"/>
+      <import feature="org.eclipse.emf.ecore" version="2.7.0" match="compatible"/>
       <import feature="org.eclipse.emf.ecore" version="2.7.0" match="compatible"/>
       <import feature="org.eclipse.gef" version="3.7.2" match="compatible"/>
    </requires>
@@ -95,20 +99,20 @@ This Agreement is governed by the laws of the State of New York and the intellec
          id="org.jnect.core"
          download-size="0"
          install-size="0"
-         version="0.0.0"/>
+         version="0.2.0"/>
 
    <plugin
          id="org.jnect.bodymodel"
          download-size="0"
          install-size="0"
-         version="0.0.0"
+         version="0.2.0"
          unpack="false"/>
 
    <plugin
          id="org.jnect.gesture"
          download-size="0"
          install-size="0"
-         version="0.0.0"
+         version="0.2.0"
          unpack="false"/>
 
 </feature>

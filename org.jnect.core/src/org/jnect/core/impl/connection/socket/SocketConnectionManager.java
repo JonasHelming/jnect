@@ -100,4 +100,10 @@ public class SocketConnectionManager extends ConnectionDataHandler implements Co
 		return false;
 	}
 
+	@Override
+	public void stopKinect() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

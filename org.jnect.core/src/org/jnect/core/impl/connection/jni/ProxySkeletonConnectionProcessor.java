@@ -50,6 +50,12 @@ public class ProxySkeletonConnectionProcessor extends ConnectionProcessor {
 		logger.info("Shutdown requested.");
 		this.run = false;
 	}
+	
+	public void stopKinect(){
+		String msg = this.kinectHandlerProxy.stop();
+		
+		logger.info(msg);
+	}
 
 	private void doRun() {
 		String input = this.kinectHandlerProxy.getSkeleton(); // This seems to

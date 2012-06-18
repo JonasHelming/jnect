@@ -26,5 +26,7 @@ public interface ConnectionManager {
 	void stopSpeechRecognition();
 	boolean isSpeechRecognitionStarted();
 	
+	void stopKinect();
+	
 	void setDataHandler(KinectDataHandler dataHandler);
 }

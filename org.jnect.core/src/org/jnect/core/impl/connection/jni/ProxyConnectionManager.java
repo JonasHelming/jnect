@@ -43,11 +43,15 @@ public class ProxyConnectionManager extends ConnectionDataHandler implements Con
 	
 	@Override
 	public void closeConnection() throws IOException {
+		logger.info("Closing connection to Kinect");
+		
+		this.stopKinect();
+		
 		// Shutdown threads
 		stopSkeletonTracking();
 		stopSpeechRecognition();
 		
-		logger.info("Closing connection to Kinect");
+		logger.info("Connection to Kinect closed");
 	}
 	
 	@Override
@@ -104,5 +108,11 @@ public class ProxyConnectionManager extends ConnectionDataHandler implements Con
 	@Override
 	public boolean isSpeechRecognitionStarted() {
 		return this.speechProcessorThread != null && this.speechProcessorThread.isAlive();
+	}
+
+	@Override
+	public void stopKinect() {
+		if(this.skeletonProcessor != null)
+			this.skeletonProcessor.stopKinect();		
 	}
 }

@@ -17,6 +17,7 @@ namespace MicrosoftKinectWrapper
         string setUpAndRun();
         string testSkeletonTracking();
         string getSkeleton();
+        string stop();
     }
 
     public class KinectHandler : IKinectHandler
@@ -206,6 +207,13 @@ namespace MicrosoftKinectWrapper
 
             return "Setup Done!";
 
+        }
+
+        public String stop()
+        {
+            this.kinectSensor.Stop();
+
+            return "Kinect Stoped...";
         }
 
         public string testSkeletonTracking()

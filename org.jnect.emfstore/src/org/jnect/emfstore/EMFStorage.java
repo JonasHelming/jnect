@@ -105,91 +105,110 @@ public class EMFStorage extends Observable implements ICommitter {
 
 	protected EMFStorage() {
 		this.changePackagesUpdateNeeded = true;
-		connectToEMFStoreAndInit();
-		BODY_ELEMENTS_COUNT = recordingBody.eContents().size();
-		// 3 changes (x, y, z) in every body element
-		NEEDED_CHANGES = BODY_ELEMENTS_COUNT * 3;
 		replayBody = createAndFillBody();
 		outwardRecordingBody = createAndFillBody();
 		outwardRecordingBody.eAdapters().add(new BundleBodyChangesAdapter());
+		BODY_ELEMENTS_COUNT = outwardRecordingBody.eContents().size();
+		// 3 changes (x, y, z) in every body element
+		NEEDED_CHANGES = BODY_ELEMENTS_COUNT * 3;
 	}
 
-	private void connectToEMFStoreAndInit() {
-		new EMFStoreCommand() {
-			@Override
-			protected void doRun() {
-				try {
-					// create a default Usersession and log in
-					usersession = EMFStoreClientUtil.createUsersession();
-					Workspace currentWorkspace = WorkspaceManager.getInstance().getCurrentWorkspace();
-					currentWorkspace.getUsersessions().add(usersession);
-					usersession.logIn();
+	/**
+	 * This method sets up a connection to the EMFStore to retrieve a stored body model, if one is present. If the
+	 * connection is already accomplished the call to this method is still safe, nothing will happen.
+	 * 
+	 * @return true if the connection was successful, false otherwise
+	 */
+	private boolean connectToEMFStoreAndInit() {
+		if (projectSpace == null) {
 
-					// search for existing storage project on server
-					Iterator<ProjectInfo> projectInfos = currentWorkspace.getRemoteProjectList(usersession).iterator();
-					ProjectInfo projectInfo = null;
-					while (projectInfos.hasNext()) {
-						ProjectInfo currentProjectInfo = projectInfos.next();
-						if (currentProjectInfo.getName().equals(PROJECT_NAME)) {
-							projectInfo = currentProjectInfo;
-							break;
+			new EMFStoreCommand() {
+				@Override
+				protected void doRun() {
+					try {
+						// create a default Usersession and log in
+						usersession = EMFStoreClientUtil.createUsersession();
+						Workspace currentWorkspace = WorkspaceManager.getInstance().getCurrentWorkspace();
+						currentWorkspace.getUsersessions().add(usersession);
+						usersession.logIn();
+
+						// search for existing storage project on server
+						Iterator<ProjectInfo> projectInfos = currentWorkspace.getRemoteProjectList(usersession)
+							.iterator();
+						ProjectInfo projectInfo = null;
+						while (projectInfos.hasNext()) {
+							ProjectInfo currentProjectInfo = projectInfos.next();
+							if (currentProjectInfo.getName().equals(PROJECT_NAME)) {
+								projectInfo = currentProjectInfo;
+								break;
+							}
 						}
-					}
 
-					// if storage project is not existing on server create one, else retrieve it
-					if (projectInfo == null) {
-						projectSpace = ModelFactory.eINSTANCE.createProjectSpace();
-						projectSpace.setProject(org.eclipse.emf.emfstore.common.model.ModelFactory.eINSTANCE
-							.createProject());
-						projectSpace.setProjectName(PROJECT_NAME);
-						projectSpace.setProjectDescription("Project for jnect-storage");
-						projectSpace.setLocalOperations(ModelFactory.eINSTANCE.createOperationComposite());
-						projectSpace.initResources(currentWorkspace.eResource().getResourceSet());
-						((WorkspaceImpl) currentWorkspace).addProjectSpace(projectSpace);
-						currentWorkspace.save();
-						projectSpace.shareProject(usersession, new NullProgressMonitor());
-					} else {
-						// check if we already have a local copy, else checkout the project
+						// if storage project is not existing on server create one, else retrieve it
+						if (projectInfo == null) {
+							projectSpace = ModelFactory.eINSTANCE.createProjectSpace();
+							projectSpace.setProject(org.eclipse.emf.emfstore.common.model.ModelFactory.eINSTANCE
+								.createProject());
+							projectSpace.setProjectName(PROJECT_NAME);
+							projectSpace.setProjectDescription("Project for jnect-storage");
+							projectSpace.setLocalOperations(ModelFactory.eINSTANCE.createOperationComposite());
+							projectSpace.initResources(currentWorkspace.eResource().getResourceSet());
+							((WorkspaceImpl) currentWorkspace).addProjectSpace(projectSpace);
+							currentWorkspace.save();
+							projectSpace.shareProject(usersession, new NullProgressMonitor());
+						} else {
+							// check if we already have a local copy, else checkout the project
+							boolean found = false;
+							for (ProjectSpace ps : currentWorkspace.getProjectSpaces()) {
+								if (ps.getProjectInfo().getName().equals(PROJECT_NAME)) {
+									projectSpace = ps;
+									projectSpace.setUsersession(usersession);
+									found = true;
+									break;
+								}
+							}
+							if (!found) {
+								projectSpace = currentWorkspace.checkout(usersession, projectInfo);
+							}
+						}
+
+						Project project = projectSpace.getProject();
 						boolean found = false;
-						for (ProjectSpace ps : currentWorkspace.getProjectSpaces()) {
-							if (ps.getProjectInfo().getName().equals(PROJECT_NAME)) {
-								projectSpace = ps;
-								projectSpace.setUsersession(usersession);
+						for (EObject obj : project.getAllModelElements()) {
+							if (obj instanceof Body) {
+								recordingBody = (Body) obj;
 								found = true;
 								break;
 							}
 						}
 						if (!found) {
-							projectSpace = currentWorkspace.checkout(usersession, projectInfo);
+							recordingBody = createAndFillBody();
+							project.addModelElement(recordingBody);
 						}
-					}
+						projectSpace.commit(createLogMessage(usersession.getUsername(), "commit initial body"), null,
+							new NullProgressMonitor());
 
-					Project project = projectSpace.getProject();
-					boolean found = false;
-					for (EObject obj : project.getAllModelElements()) {
-						if (obj instanceof Body) {
-							recordingBody = (Body) obj;
-							found = true;
-							break;
-						}
-					}
-					if (!found) {
-						recordingBody = createAndFillBody();
-						project.addModelElement(recordingBody);
-					}
-					projectSpace.commit(createLogMessage(usersession.getUsername(), "commit initial body"), null,
-						new NullProgressMonitor());
+						org.eclipse.emf.emfstore.client.model.Configuration.setAutoSave(false);
 
-					org.eclipse.emf.emfstore.client.model.Configuration.setAutoSave(false);
-
-				} catch (AccessControlException e) {
-					ModelUtil.logException(e);
-				} catch (EmfStoreException e) {
-					ModelUtil.logException(e);
+					} catch (AccessControlException e) {
+						ModelUtil.logException(e);
+						projectSpace = null;
+						recordingBody = null;
+					} catch (EmfStoreException e) {
+						ModelUtil.logException(e);
+						projectSpace = null;
+						recordingBody = null;
+					}
 				}
-			}
-		}.run(false);
+			}.run(false);
+		}
 
+		if (projectSpace == null) {
+			return false;
+		} else {
+			assert recordingBody != null;
+			return true;
+		}
 	}
 
 	public static Body createAndFillBody() {
@@ -304,6 +323,10 @@ public class EMFStorage extends Observable implements ICommitter {
 	}
 
 	public void initReplay() {
+		if (!connectToEMFStoreAndInit()) {
+			return;
+		}
+
 		if (changePackagesUpdateNeeded) {
 			PrimaryVersionSpec start = VersioningFactory.eINSTANCE.createPrimaryVersionSpec();
 			start.setIdentifier(1);
@@ -327,6 +350,9 @@ public class EMFStorage extends Observable implements ICommitter {
 	 * @throws EmfStoreException
 	 */
 	public void replay(final int version) {
+		if (!connectToEMFStoreAndInit())
+			return;
+
 		if (replayRunnable == null) {
 			replayRunnable = new ReplayRunnable();
 		}
@@ -438,6 +464,9 @@ public class EMFStorage extends Observable implements ICommitter {
 	}
 
 	private void commitBodyChanges(IProgressMonitor monitor) {
+		if (!connectToEMFStoreAndInit())
+			return;
+
 		// commit the pending changes of the project to the EMF Store
 		try {
 			// projectSpace.setDirty(true);
@@ -477,7 +506,11 @@ public class EMFStorage extends Observable implements ICommitter {
 	}
 
 	public void startStopRecording(boolean on) {
-		isRecording = on;
+		if (on && connectToEMFStoreAndInit()) {
+			isRecording = true;
+		} else {
+			isRecording = false;
+		}
 	}
 
 	private class ReplayRunnable implements Runnable {
@@ -563,7 +596,8 @@ public class EMFStorage extends Observable implements ICommitter {
 
 			if (++currChanges == NEEDED_CHANGES) {
 				currChanges = 0;
-				if (isRecording) {
+				if (isRecording && projectSpace != null) {
+					assert recordingBody != null;
 					try {
 						compOpHandle = projectSpace.beginCompositeOperation();
 						syncBodies(outwardRecordingBody, recordingBody);

@@ -5,11 +5,11 @@
   <parent>
     <groupId>org.jnect</groupId>
     <artifactId>jnect-parent</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.1</version>
   </parent>
   <groupId>org.jnect</groupId>
   <artifactId>org.jnect.updatesite.aggregator</artifactId>
-  <version>0.2.0</version>
+  <version>0.2.1</version>
   <packaging>pom</packaging>
   <modules>
     <module>../org.eclipse.gef.examples.shapes</module>

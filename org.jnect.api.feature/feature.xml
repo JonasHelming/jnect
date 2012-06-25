@@ -2,7 +2,7 @@
 <feature
       id="org.jnect.api.feature"
       label="Jnect API Feature"
-      version="0.2.0"
+      version="0.2.1.qualifier"
       provider-name="jnect.org">
 
    <description url="http://www.example.com/description">
@@ -99,20 +99,20 @@ This Agreement is governed by the laws of the State of New York and the intellec
          id="org.jnect.core"
          download-size="0"
          install-size="0"
-         version="0.2.0"/>
+         version="0.2.1.qualifier"/>
 
    <plugin
          id="org.jnect.bodymodel"
          download-size="0"
          install-size="0"
-         version="0.2.0"
+         version="0.2.1.qualifier"
          unpack="false"/>
 
    <plugin
          id="org.jnect.gesture"
          download-size="0"
          install-size="0"
-         version="0.2.0"
+         version="0.2.1.qualifier"
          unpack="false"/>
 
 </feature>

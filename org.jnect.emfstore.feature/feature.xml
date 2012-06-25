@@ -2,7 +2,7 @@
 <feature
       id="org.jnect.emfstore.feature"
       label="Jnect Emfstore Demo Feature"
-      version="0.2.0"
+      version="0.2.1.qualifier"
       provider-name="jnect.org">
 
    <description url="http://www.example.com/description">
@@ -31,7 +31,14 @@
          id="org.jnect.emfstore"
          download-size="0"
          install-size="0"
-         version="0.2.0"
+         version="0.2.1.qualifier"
+         unpack="false"/>
+
+   <plugin
+         id="org.jnect.ui"
+         download-size="0"
+         install-size="0"
+         version="0.2.1.qualifier"
          unpack="false"/>
 
 </feature>

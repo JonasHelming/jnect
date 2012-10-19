@@ -19,6 +19,7 @@
                id="org.jnect.demo.gef">
             <command
                   commandId="org.jnect.demo.gef.start"
+                  label="Start GEF"
                   style="push">
             </command>
          </toolbar>

@@ -14,6 +14,7 @@ import org.jnect.demo.debug.DebugHelper;
 import org.jnect.gesture.Gesture;
 import org.jnect.gesture.GestureListener;
 import org.jnect.gesture.detectors.CrouchGestureDetector;
+import org.jnect.gesture.detectors.JumpGestureDetector;
 import org.jnect.gesture.detectors.RightHandAboveHeadGestureDetector;
 
 public class DebugGestureListener extends GestureListener {
@@ -26,6 +27,8 @@ public class DebugGestureListener extends GestureListener {
 			DebugHelper.stepOver();
 		} else if(CrouchGestureDetector.class.equals(gesture)) {
 			DebugHelper.stepInto();
+		}else if(JumpGestureDetector.class.equals(gesture)){
+			DebugHelper.resume();
 		}
 		
 	}

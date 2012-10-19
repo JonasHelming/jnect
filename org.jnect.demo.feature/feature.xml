@@ -2,7 +2,7 @@
 <feature
       id="org.jnect.demo.feature"
       label="Jnect Demo Feature"
-      version="0.2.1.qualifier"
+      version="0.2.2.qualifier"
       provider-name="jnect.org">
 
    <description url="http://www.example.com/description">
@@ -104,28 +104,28 @@ This Agreement is governed by the laws of the State of New York and the intellec
          id="org.jnect.demo.debug"
          download-size="0"
          install-size="0"
-         version="0.2.1.qualifier"
+         version="0.0.0"
          unpack="false"/>
 
    <plugin
          id="org.jnect.demo.game"
          download-size="0"
          install-size="0"
-         version="0.2.1.qualifier"
+         version="0.0.0"
          unpack="false"/>
 
    <plugin
          id="org.jnect.demo.gef"
          download-size="0"
          install-size="0"
-         version="0.2.1.qualifier"
+         version="0.0.0"
          unpack="false"/>
 
    <plugin
          id="org.jnect.ui"
          download-size="0"
          install-size="0"
-         version="0.2.1.qualifier"
+         version="0.0.0"
          unpack="false"/>
 
 </feature>

@@ -31,10 +31,12 @@
                id="org.jnect.base">
             <command
                   commandId="org.jnect.base.startKinect"
+                  label="Start Kinect"
                   style="push">
             </command>
             <command
                   commandId="org.jnect.base.stopKinect"
+                  label="Stop Kinect"
                   style="push">
             </command>
          </toolbar>

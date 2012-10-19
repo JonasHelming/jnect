@@ -47,10 +47,12 @@
                id="org.jnect.demo.debug.speech">
             <command
                   commandId="org.jnect.demo.debug.startSpeech"
+                  label="Start Speech"
                   style="push">
             </command>
             <command
                   commandId="org.jnect.demo.debug.stopSpeech"
+                  label="Stop Speech"
                   style="push">
             </command>
          </toolbar>
@@ -58,10 +60,12 @@
                id="org.jnect.demo.debug.skeleton">
             <command
                   commandId="org.jnect.demo.debug.startSkeleton"
+                  label="Start SkeletonTracking"
                   style="push">
             </command>
             <command
                   commandId="org.jnect.demo.debug.stopSkeleton"
+                  label="Stop SkeletonTracking"
                   style="push">
             </command>
          </toolbar>

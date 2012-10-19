@@ -2,7 +2,7 @@
 <feature
       id="org.jnect.demo.gef.editing.feature"
       label="Jnect Gef Editing Demo Feature"
-      version="0.2.1.qualifier"
+      version="0.2.2.qualifier"
       provider-name="jnect.org">
 
    <description url="http://www.example.com/description">
@@ -36,14 +36,14 @@ of editing GEF diagrams (here an adapted example from the GEF-SDK) via kinect.
          id="org.eclipse.gef.examples.shapes"
          download-size="0"
          install-size="0"
-         version="0.2.1.qualifier"
+         version="0.0.0"
          unpack="false"/>
 
    <plugin
          id="org.jnect.ui"
          download-size="0"
          install-size="0"
-         version="0.2.1.qualifier"
+         version="0.0.0"
          unpack="false"/>
 
 </feature>

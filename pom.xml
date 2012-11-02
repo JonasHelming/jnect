@@ -9,7 +9,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <tycho-version>0.15.0</tycho-version>
+    <tycho-version>0.16.0</tycho-version>
     <!-- The autosave-functionality was not yet released with a stable build but with 0.8.9.M936, so we use the latest archived milestone here. -->
     <emfstore-site>http://download.eclipse.org/emf-store/milestones/latest</emfstore-site>
     <gef-site>http://download.eclipse.org/tools/gef/updates/releases</gef-site>
